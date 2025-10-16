@@ -10,6 +10,12 @@ exports.default = async function notarizing(context) {
   const appId = 'com.atv.remote';
   const appPath = `${appOutDir}/ATV Remote.app`;
 
+  // Check if code signing is disabled
+  if (process.env.CSC_IDENTITY_AUTO_DISCOVERY === 'false') {
+    console.log('⚠️  Skipping notarization: Code signing is disabled (CSC_IDENTITY_AUTO_DISCOVERY=false)');
+    return;
+  }
+
   const appleId = process.env.NOTARIZE_APPLE_ID || process.env.APPLE_ID;
   const appleIdPassword = process.env.NOTARIZE_APPLE_PASSWORD || process.env.APPLE_APP_SPECIFIC_PASSWORD;
   const teamId = process.env.NOTARIZE_TEAM_ID || process.env.APPLE_TEAM_ID;
