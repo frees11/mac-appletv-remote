@@ -1,0 +1,6 @@
+# Production requirements for bundled backend
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+pyatv==0.14.5
+websockets==12.0
+python-dotenv==1.0.1

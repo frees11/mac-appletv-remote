@@ -1,0 +1,70 @@
+appId: com.atv.remote
+productName: ATV Remote
+copyright: Copyright © 2025
+afterSign: scripts/notarize.js
+
+directories:
+  output: dist-electron
+  buildResources: build
+
+files:
+  - dist/**/*
+  - electron/**/*
+  - backend/dist/atv-backend/**/*
+  - package.json
+  - .env.example
+  - backend/.env.example
+
+# macOS configuration
+mac:
+  category: public.app-category.utilities
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+  icon: build/icon.icns
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+
+# DMG configuration
+dmg:
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+  window:
+    width: 540
+    height: 380
+
+# Windows configuration
+win:
+  target:
+    - nsis
+    - portable
+  icon: build/icon.ico
+
+# Linux configuration
+linux:
+  target:
+    - AppImage
+    - deb
+  icon: build/icon.png
+  category: Utility
+
+# Auto-update configuration (optional)
+publish:
+  provider: generic
+  url: https://your-update-server.com/releases
+
+# Compression
+compression: normal
+
+# Keep backend directory accessible (not in asar) - onedir bundle
+asarUnpack:
+  - backend/dist/atv-backend/**/*

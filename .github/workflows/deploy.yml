@@ -1,0 +1,176 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main  # Auto-build on every push to main
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+jobs:
+  build-macos:
+    name: Build macOS Application
+    runs-on: macos-latest
+    # Skip if commit message contains [skip ci]
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate version number
+        id: version
+        run: |
+          # Get current version from package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+
+          # Split version into parts
+          IFS='.' read -r -a VERSION_PARTS <<< "$CURRENT_VERSION"
+          MAJOR="${VERSION_PARTS[0]}"
+          MINOR="${VERSION_PARTS[1]}"
+          PATCH="${VERSION_PARTS[2]}"
+
+          # Auto-increment patch version
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "tag_name=v$NEW_VERSION" >> $GITHUB_OUTPUT
+
+          echo "Current version: $CURRENT_VERSION"
+          echo "New version: $NEW_VERSION"
+
+      - name: Update package.json version
+        run: |
+          npm version ${{ steps.version.outputs.new_version }} --no-git-tag-version
+          echo "Updated package.json to version ${{ steps.version.outputs.new_version }}"
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }} [skip ci]"
+          git tag -a "${{ steps.version.outputs.tag_name }}" -m "Release ${{ steps.version.outputs.tag_name }}"
+
+      - name: Push changes
+        run: |
+          git push origin main
+          git push origin "${{ steps.version.outputs.tag_name }}"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install ImageMagick (for icon generation)
+        run: brew install imagemagick
+
+      - name: Install Python dependencies
+        working-directory: backend
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build Python backend
+        run: ./scripts/build-backend.sh
+
+      - name: Generate app icons
+        run: npm run icons
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Electron app for macOS
+        env:
+          # Code signing (optional - configure these in GitHub Secrets if needed)
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          # Disable code signing if secrets not configured
+          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.CSC_LINK != '' && 'true' || 'false' }}
+        run: |
+          if [ -z "$CSC_LINK" ]; then
+            echo "⚠️  Code signing disabled (no CSC_LINK secret configured)"
+          else
+            echo "✅ Code signing enabled"
+          fi
+          npm run electron:build -- --mac
+
+      - name: List build artifacts
+        run: |
+          echo "📦 Build artifacts:"
+          ls -lh dist-electron/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-builds
+          path: |
+            dist-electron/*.dmg
+            dist-electron/*.zip
+          retention-days: 7
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag_name }}
+          name: Release ${{ steps.version.outputs.new_version }}
+          files: |
+            dist-electron/*.dmg
+            dist-electron/*.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## ATV Remote v${{ steps.version.outputs.new_version }}
+
+            **Auto-generated release** from commit ${{ github.sha }}
+
+            ### Downloads
+            - **DMG (Intel)**: For Intel Macs
+            - **DMG (Apple Silicon)**: For M1/M2/M3 Macs
+            - **ZIP**: Alternative installation method
+
+            ### Installation
+            1. Download the appropriate DMG file for your Mac
+            2. Open the DMG file
+            3. Drag ATV Remote to Applications folder
+            4. Launch from Applications
+
+            ### First Time Setup
+            See [FIRST-TIME-SETUP.md](https://github.com/${{ github.repository }}/blob/main/FIRST-TIME-SETUP.md) for configuration instructions.
+
+            ---
+            Built automatically by GitHub Actions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify build success
+        if: success()
+        run: |
+          echo "✅ Build completed successfully!"
+          echo "📦 Release created at: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+
+      - name: Notify build failure
+        if: failure()
+        run: |
+          echo "❌ Build failed! Check the logs above for details."
