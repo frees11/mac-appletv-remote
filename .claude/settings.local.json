@@ -42,7 +42,12 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(security list-keychains:*)",
+      "Bash(security find-certificate:*)",
+      "Bash(openssl x509:*)",
+      "Read(//Users/frees/Desktop/**)",
+      "Bash(openssl pkcs12:*)"
     ],
     "deny": [],
     "ask": []

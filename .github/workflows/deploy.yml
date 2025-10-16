@@ -105,8 +105,13 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          # Only set CSC variables if secrets are configured
-          if [ -n "${{ secrets.CSC_LINK }}" ]; then
+          # Reconstruct CSC_LINK from parts if split (for large certificates)
+          if [ -n "${{ secrets.CSC_LINK_PART1 }}" ]; then
+            echo "✅ Code signing enabled (multi-part certificate)"
+            export CSC_LINK="${{ secrets.CSC_LINK_PART1 }}${{ secrets.CSC_LINK_PART2 }}${{ secrets.CSC_LINK_PART3 }}"
+            export CSC_KEY_PASSWORD="${{ secrets.CSC_KEY_PASSWORD }}"
+            export CSC_IDENTITY_AUTO_DISCOVERY=true
+          elif [ -n "${{ secrets.CSC_LINK }}" ]; then
             echo "✅ Code signing enabled"
             export CSC_LINK="${{ secrets.CSC_LINK }}"
             export CSC_KEY_PASSWORD="${{ secrets.CSC_KEY_PASSWORD }}"
