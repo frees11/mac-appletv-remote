@@ -20,6 +20,18 @@ Buildne aplikáciu
 Nahrá DMG do GitHub Releases
 ```
 
+## Setup (Prvýkrát)
+
+Musíš nastaviť Personal Access Token (PAT) pre GitHub Actions:
+
+**Návod: [PAT_SETUP.md](PAT_SETUP.md)** (~5 minút)
+
+Stručne:
+1. GitHub → Settings → Developer settings → Personal access tokens
+2. Vytvor token s `repo` scope
+3. Pridaj do repository Secrets ako `PAT_TOKEN`
+4. Hotovo!
+
 ## Použitie
 
 ### Stačí pushnúť do main:
