@@ -104,15 +104,16 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          # Disable code signing if secrets not configured
-          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.CSC_LINK != '' && 'true' || 'false' }}
         run: |
-          if [ -z "$CSC_LINK" ]; then
-            echo "⚠️  Code signing disabled (no CSC_LINK secret configured)"
-          else
+          # Only set CSC variables if secrets are configured
+          if [ -n "${{ secrets.CSC_LINK }}" ]; then
             echo "✅ Code signing enabled"
+            export CSC_LINK="${{ secrets.CSC_LINK }}"
+            export CSC_KEY_PASSWORD="${{ secrets.CSC_KEY_PASSWORD }}"
+            export CSC_IDENTITY_AUTO_DISCOVERY=true
+          else
+            echo "⚠️  Code signing disabled (no CSC_LINK secret configured)"
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
           fi
           npm run electron:build -- --mac
 

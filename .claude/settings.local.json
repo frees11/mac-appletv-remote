@@ -37,7 +37,12 @@
       "Bash(log show:*)",
       "Bash(hdiutil detach:*)",
       "Bash(npx asar extract:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []
