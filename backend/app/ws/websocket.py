@@ -1,8 +1,10 @@
 import json
+import asyncio
 from typing import Dict, Set
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.services.atv_service import atv_service
+from app.services.screenshot_service import screenshot_service
 
 router = APIRouter()
 
@@ -83,8 +85,39 @@ async def websocket_control(websocket: WebSocket):
                             "payload": info.dict() if info else None
                         }, websocket)
 
+                elif message_type == "start_screenshot_stream":
+                    device_id = payload.get("device_id")
+                    interval = payload.get("interval", 0.2)
+
+                    if device_id:
+                        print(f"📹 Starting screenshot stream for device: {device_id}")
+
+                        async def send_screenshot(message):
+                            await manager.send_personal_message(message, websocket)
+
+                        task = asyncio.create_task(
+                            screenshot_service.start_streaming(device_id, send_screenshot, interval)
+                        )
+                        screenshot_service.streaming_tasks[device_id] = task
+
+                        await manager.send_personal_message({
+                            "type": "stream_started",
+                            "payload": {"device_id": device_id}
+                        }, websocket)
+
+                elif message_type == "stop_screenshot_stream":
+                    device_id = payload.get("device_id")
+
+                    if device_id:
+                        print(f"🛑 Stopping screenshot stream for device: {device_id}")
+                        screenshot_service.stop_streaming(device_id)
+
+                        await manager.send_personal_message({
+                            "type": "stream_stopped",
+                            "payload": {"device_id": device_id}
+                        }, websocket)
+
                 elif message_type == "ping":
-                    # Heartbeat
                     await manager.send_personal_message({
                         "type": "pong",
                         "payload": {}

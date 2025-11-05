@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useWebSocket } from '@/composables/useWebSocket'
 import { useApi } from '@/composables/useApi'
 import type { RemoteAction, PlaybackInfo, Device } from '@/types'
+import ScreenStream from '@/components/ScreenStream.vue'
 
 const props = defineProps<{
   id: string
@@ -17,7 +18,9 @@ const { isConnected, connect, disconnect, send, onMessage } = useWebSocket(WS_UR
 const playbackInfo = ref<PlaybackInfo | null>(null)
 const deviceName = ref<string>('')
 const menuPressStart = ref<number | null>(null)
-const LONG_PRESS_DURATION = 600 // milliseconds
+const LONG_PRESS_DURATION = 600
+const isScreenStreamEnabled = ref(false)
+const screenStreamRef = ref<InstanceType<typeof ScreenStream> | null>(null)
 
 const sendCommand = (action: RemoteAction) => {
   console.log('Sending command:', action, 'to device:', props.id)
@@ -104,6 +107,33 @@ const fetchPlaybackInfo = () => {
   })
 }
 
+const toggleScreenStream = () => {
+  isScreenStreamEnabled.value = !isScreenStreamEnabled.value
+
+  if (isScreenStreamEnabled.value) {
+    send({
+      type: 'start_screenshot_stream',
+      payload: {
+        device_id: props.id,
+        interval: 0.2,
+      },
+    })
+  } else {
+    send({
+      type: 'stop_screenshot_stream',
+      payload: {
+        device_id: props.id,
+      },
+    })
+  }
+}
+
+const handleStreamError = (message: string) => {
+  console.error('Stream error:', message)
+  alert(`Screen streaming error: ${message}`)
+  isScreenStreamEnabled.value = false
+}
+
 const goBack = () => {
   router.push('/')
 }
@@ -176,6 +206,18 @@ onMounted(async () => {
       if (!message.payload.success) {
         console.error('Command failed:', message.payload)
       }
+    } else if (message.type === 'screenshot_frame') {
+      if (screenStreamRef.value && message.payload.image) {
+        screenStreamRef.value.handleFrameReceived(message.payload.image)
+      }
+    } else if (message.type === 'screenshot_error') {
+      if (screenStreamRef.value) {
+        screenStreamRef.value.handleError(message.payload.message)
+      }
+    } else if (message.type === 'stream_started') {
+      console.log('Screenshot stream started')
+    } else if (message.type === 'stream_stopped') {
+      console.log('Screenshot stream stopped')
     } else if (message.type === 'error') {
       console.error('WebSocket error:', message.payload)
       alert(`Error: ${message.payload.message}`)
@@ -192,22 +234,27 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  if (isScreenStreamEnabled.value) {
+    send({
+      type: 'stop_screenshot_stream',
+      payload: { device_id: props.id },
+    })
+  }
   disconnect()
-  // Remove keyboard event listener
   window.removeEventListener('keydown', handleKeyDown)
 })
 </script>
 
 <template>
-  <div class="max-w-[380px] sm:max-w-[380px] max-sm:max-w-[340px] mx-auto p-4 h-screen flex flex-col bg-gradient-to-br from-[#e6e6e6] to-[#d0d0d0] rounded-[2rem]">
+  <div class="max-w-[380px] sm:max-w-[380px] max-sm:max-w-[340px] mx-auto p-6 h-screen flex flex-col bg-gradient-to-br from-[#e6e6e6] to-[#d0d0d0] rounded-[2rem]">
     <!-- Header -->
-    <div class="mb-4 px-2">
+    <div class="mb-4">
       <div class="flex justify-between items-center mb-2">
         <button
           @click="goBack"
           class="px-4 py-2 bg-black/8 rounded-lg text-[#1d1d1f] text-sm font-medium transition-colors hover:bg-black/12 flex items-center justify-center cursor-pointer select-none"
         >
-          <span class="pointer-events-none">← Back</span>
+          ← Back
         </button>
         <div class="flex items-center gap-2 text-apple-gray-400 text-xs font-medium">
           <div
@@ -221,9 +268,34 @@ onUnmounted(() => {
       </div>
 
       <!-- Device Name -->
-      <div v-if="deviceName" class="text-center">
-        <h1 class="text-lg font-semibold text-[#1d1d1f]">{{ deviceName }}</h1>
+      <div v-if="deviceName" class="text-center mt-3 mb-3">
+        <h1 class="text-xl font-bold text-[#1d1d1f]">{{ deviceName }}</h1>
       </div>
+
+      <!-- Screen Stream Toggle -->
+      <div class="flex justify-center mt-2">
+        <button
+          @click="toggleScreenStream"
+          :class="[
+            'px-4 py-2 rounded-lg text-xs font-medium transition-all',
+            isScreenStreamEnabled
+              ? 'bg-blue-500 text-white shadow-lg'
+              : 'bg-white/60 text-[#1d1d1f] border border-black/10'
+          ]"
+        >
+          {{ isScreenStreamEnabled ? '📺 Hide Screen' : '📺 Show Screen' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Screen Stream Display -->
+    <div v-if="isScreenStreamEnabled || isScreenStreamEnabled === false" class="mb-4">
+      <ScreenStream
+        ref="screenStreamRef"
+        :device-id="props.id"
+        :is-streaming="isScreenStreamEnabled"
+        @error="handleStreamError"
+      />
     </div>
 
     <!-- Now Playing Info -->
@@ -250,9 +322,9 @@ onUnmounted(() => {
     </div>
 
     <!-- Remote Control -->
-    <div class="flex-1 flex flex-col gap-4 items-center py-4">
+    <div class="flex-1 flex flex-col gap-4 items-center">
       <!-- Power Button -->
-      <div class="w-full flex justify-end pr-2 -mb-2">
+      <div class="w-full flex justify-end -mb-2">
         <button
           @click="sendCommand('power')"
           class="w-8 h-8 bg-white/85 border border-black/8 rounded-full text-[#1d1d1f] transition-all hover:bg-white/95 hover:scale-105 active:scale-95 active:bg-white flex items-center justify-center p-0"
@@ -272,6 +344,35 @@ onUnmounted(() => {
         <div class="absolute inset-0 rounded-full pointer-events-none">
           <!-- Center select area -->
           <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[30%] h-[30%] rounded-full border border-white/5"></div>
+
+          <!-- Direction arrows -->
+          <!-- Up arrow -->
+          <div class="absolute top-[15%] left-1/2 -translate-x-1/2">
+            <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 19V5M5 12l7-7 7 7"/>
+            </svg>
+          </div>
+
+          <!-- Down arrow -->
+          <div class="absolute bottom-[15%] left-1/2 -translate-x-1/2">
+            <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 5v14M19 12l-7 7-7-7"/>
+            </svg>
+          </div>
+
+          <!-- Left arrow -->
+          <div class="absolute left-[15%] top-1/2 -translate-y-1/2">
+            <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </div>
+
+          <!-- Right arrow -->
+          <div class="absolute right-[15%] top-1/2 -translate-y-1/2">
+            <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
         </div>
         <div class="w-[180px] h-[180px] max-sm:w-[150px] max-sm:h-[150px] border-2 border-white/8 rounded-full pointer-events-none"></div>
       </div>
@@ -309,7 +410,9 @@ onUnmounted(() => {
           class="w-[70px] h-[70px] max-sm:w-15 max-sm:h-15 bg-gradient-radial from-apple-gray-700 to-apple-gray-900 rounded-full text-apple-gray-50 transition-all shadow-[inset_0_1px_4px_rgba(0,0,0,0.3),0_3px_8px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 active:shadow-[inset_0_1px_6px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.2)] flex items-center justify-center"
         >
           <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5v14l11-7z"/>
+            <path d="M6 5v14l8-7z"/>
+            <rect x="16" y="5" width="2" height="14" rx="1"/>
+            <rect x="20" y="5" width="2" height="14" rx="1"/>
           </svg>
         </button>
         <button

@@ -13,7 +13,11 @@ const error = ref<string | null>(null)
 const pairingDevice = ref<string | null>(null)
 const pairingPin = ref('')
 const waitingForPin = ref(false)
+const timeExpired = ref(false)
 let pinTimeout: NodeJS.Timeout | null = null
+
+const CACHE_KEY = 'atv_remote_devices'
+const CACHE_EXPIRY = 1000 * 60 * 60 * 24 // 24 hours
 
 // Filter to only show Apple TV devices
 const appleTVDevices = computed(() => {
@@ -36,12 +40,48 @@ const appleTVDevices = computed(() => {
   })
 })
 
+const loadCachedDevices = () => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY)
+    if (cached) {
+      const data = JSON.parse(cached)
+      if (data.timestamp && Date.now() - data.timestamp < CACHE_EXPIRY) {
+        devices.value = data.devices || []
+        return true
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load cached devices:', e)
+  }
+  return false
+}
+
+const saveCachedDevices = (devicesList: Device[]) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      devices: devicesList,
+      timestamp: Date.now()
+    }))
+  } catch (e) {
+    console.error('Failed to cache devices:', e)
+  }
+}
+
 const scanDevices = async () => {
   loading.value = true
   error.value = null
 
   try {
-    devices.value = await api.fetchDevices()
+    const newDevices = await api.fetchDevices()
+
+    // Merge with existing devices, keeping paired status
+    const mergedDevices = newDevices.map(newDevice => {
+      const existing = devices.value.find(d => d.identifier === newDevice.identifier)
+      return existing ? { ...newDevice, paired: existing.paired || newDevice.paired } : newDevice
+    })
+
+    devices.value = mergedDevices
+    saveCachedDevices(mergedDevices)
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to scan devices'
   } finally {
@@ -84,7 +124,14 @@ const startPairing = async (device: Device) => {
   pairingDevice.value = device.identifier
   pairingPin.value = ''
   waitingForPin.value = false
+  timeExpired.value = false
   error.value = null
+
+  // Clear any existing timeout
+  if (pinTimeout) {
+    clearTimeout(pinTimeout)
+    pinTimeout = null
+  }
 
   // Start pairing process on backend immediately
   try {
@@ -102,6 +149,7 @@ const startPairing = async (device: Device) => {
         const deviceIndex = devices.value.findIndex(d => d.identifier === device.identifier)
         if (deviceIndex !== -1) {
           devices.value[deviceIndex].paired = true
+          saveCachedDevices(devices.value)
         }
         alert('Pairing successful!')
         // Refresh in background
@@ -115,12 +163,9 @@ const startPairing = async (device: Device) => {
       waitingForPin.value = true
       console.log('Waiting for PIN entry, modal should stay open')
 
-      // Set timeout to close modal after 60 seconds
+      // Set timeout to show resend option after 60 seconds
       pinTimeout = setTimeout(() => {
-        waitingForPin.value = false
-        pairingDevice.value = null
-        pairingPin.value = ''
-        error.value = 'Pairing session expired. Please try again.'
+        timeExpired.value = true
       }, 60000)
     } else if (result.success) {
       pairingDevice.value = null
@@ -129,6 +174,7 @@ const startPairing = async (device: Device) => {
       const deviceIndex = devices.value.findIndex(d => d.identifier === device.identifier)
       if (deviceIndex !== -1) {
         devices.value[deviceIndex].paired = true
+        saveCachedDevices(devices.value)
       }
       alert('Pairing successful!')
       // Refresh in background
@@ -168,6 +214,7 @@ const submitPairing = async () => {
       const deviceIndex = devices.value.findIndex(d => d.identifier === deviceId)
       if (deviceIndex !== -1) {
         devices.value[deviceIndex].paired = true
+        saveCachedDevices(devices.value)
       }
 
       alert('✅ Pairing successful! You can now control your Apple TV.')
@@ -194,29 +241,40 @@ const cancelPairing = () => {
   pairingDevice.value = null
   waitingForPin.value = false
   pairingPin.value = ''
+  timeExpired.value = false
+}
+
+const resendRequest = async () => {
+  if (!pairingDevice.value) return
+
+  const deviceId = pairingDevice.value
+  const device = devices.value.find(d => d.identifier === deviceId)
+  if (device) {
+    await startPairing(device)
+  }
 }
 
 onMounted(() => {
+  // Load cached devices immediately for instant display
+  const hasCached = loadCachedDevices()
+
+  // Then scan for new/updated devices in the background
   scanDevices()
+
+  if (!hasCached) {
+    // If no cache, show initial message
+    console.log('No cached devices, waiting for scan...')
+  }
 })
 </script>
 
 <template>
-  <div class="h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-y-auto">
+  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 pb-20">
       <!-- Header -->
-      <div class="mb-8">
-        <div class="flex items-center gap-4">
-          <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 shadow-lg shadow-purple-500/50">
-            <svg class="h-8 w-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 3C6.9 3 6 3.9 6 5v14c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H8zm4 16c-.8 0-1.5-.7-1.5-1.5S11.2 16 12 16s1.5.7 1.5 1.5S12.8 19 12 19zm0-4c-.8 0-1.5-.7-1.5-1.5S11.2 12 12 12s1.5.7 1.5 1.5S12.8 15 12 15zm3-4.5c0 .8-.7 1.5-1.5 1.5h-3c-.8 0-1.5-.7-1.5-1.5v-3C9 6.7 9.7 6 10.5 6h3c.8 0 1.5.7 1.5 1.5v3z"/>
-            </svg>
-          </div>
-          <div>
-            <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">ATV Remote</h1>
-            <p class="mt-1 text-sm text-gray-400">Control your Apple TV devices</p>
-          </div>
-        </div>
+      <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">ATV Remote</h1>
+        <p class="mt-2 text-sm text-gray-400">Control your Apple TV devices</p>
       </div>
 
       <!-- Error Message -->
@@ -272,10 +330,10 @@ onMounted(() => {
           v-for="device in appleTVDevices"
           :key="device.identifier"
           @click="selectDevice(device, $event)"
-          class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 p-6 shadow-lg border border-gray-700 hover:border-purple-500/50 transition-all duration-300 hover:shadow-purple-500/20 hover:shadow-xl cursor-pointer"
+          class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 p-6 border border-gray-700 hover:border-purple-500/50 cursor-pointer shadow-[0_10px_15px_-3px_rgb(0_0_0/0.1),0_4px_6px_-4px_rgb(0_0_0/0.1)] hover:shadow-[0_20px_25px_-5px_rgba(168,85,247,0.4),0_8px_10px_-6px_rgba(168,85,247,0.2)] transition-all duration-300 ease-out"
         >
           <!-- Glow Effect -->
-          <div class="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-purple-600/0 group-hover:from-purple-500/10 group-hover:to-purple-600/10 transition-all duration-300"></div>
+          <div class="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-purple-600/0 group-hover:from-purple-500/10 group-hover:to-purple-600/10 transition-all duration-300 ease-out"></div>
 
           <div class="relative">
             <!-- Header -->
@@ -366,7 +424,8 @@ onMounted(() => {
               <div class="text-center mb-8">
                 <h3 class="text-2xl font-bold text-white mb-2">Enter PIN from Apple TV</h3>
                 <p class="text-sm text-gray-400">Look at your Apple TV screen and enter the 4-digit PIN</p>
-                <p class="text-xs text-yellow-500 mt-2">⏱ Session expires in 60 seconds</p>
+                <p v-if="!timeExpired" class="text-xs text-yellow-500 mt-2">⏱ Session expires in 60 seconds</p>
+                <p v-else class="text-xs text-red-500 mt-2">⏱ Session expired - please resend request</p>
               </div>
 
               <!-- PIN Input -->
@@ -378,7 +437,7 @@ onMounted(() => {
                     class="relative w-16 h-20 rounded-xl border-2 border-gray-700 bg-gray-800 flex items-center justify-center transition-all cursor-text"
                     :class="pairingPin.length >= i ? 'border-purple-500 ring-2 ring-purple-500/20' : ''"
                   >
-                    <span class="text-3xl font-bold text-white pointer-events-none">
+                    <span class="text-3xl font-bold text-white pointer-events-none font-mono tabular-nums">
                       {{ pairingPin[i - 1] || '•' }}
                     </span>
                   </div>
@@ -406,6 +465,15 @@ onMounted(() => {
                   Cancel
                 </button>
                 <button
+                  v-if="timeExpired"
+                  @click="resendRequest"
+                  type="button"
+                  class="flex-1 rounded-lg bg-orange-600 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-500 shadow-lg shadow-orange-600/30 transition-all"
+                >
+                  Resend Request
+                </button>
+                <button
+                  v-else
                   @click="submitPairing"
                   type="button"
                   :disabled="pairingPin.length !== 4"

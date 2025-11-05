@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-from app.api import devices, control, debug
+from app.api import devices, control, debug, screenshot
 from app.ws import websocket
 
 load_dotenv()
@@ -48,6 +48,7 @@ app.add_middleware(
 app.include_router(devices.router, prefix="/api", tags=["devices"])
 app.include_router(control.router, prefix="/api", tags=["control"])
 app.include_router(debug.router, prefix="/api", tags=["debug"])
+app.include_router(screenshot.router, prefix="/api/screenshot", tags=["screenshot"])
 app.include_router(websocket.router, prefix="/ws", tags=["websocket"])
 
 

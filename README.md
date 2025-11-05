@@ -12,6 +12,7 @@ A modern, multiplatform remote control for Apple TV built with Vue 3, Electron, 
 - **Pairing Support**: Secure pairing with your Apple TV
 - **Now Playing Info**: See what's currently playing
 - **Real-time Control**: WebSocket-based instant response
+- **Screen Streaming**: See your Apple TV screen in real-time (requires Developer Mode) 📺
 - **Keyboard Shortcuts**: Quick access with global shortcuts
 - **Menu Bar App**: Lives in your system tray for easy access
 - **Cross-platform**: Works on macOS, Windows, and Linux
@@ -20,7 +21,7 @@ A modern, multiplatform remote control for Apple TV built with Vue 3, Electron, 
 
 - **Frontend**: Vue 3 + TypeScript + Tailwind CSS
 - **Desktop**: Electron
-- **Backend**: FastAPI + pyatv
+- **Backend**: FastAPI + pyatv + pymobiledevice3
 - **Communication**: WebSocket + REST API
 
 ## Custom Icon
@@ -197,6 +198,17 @@ This interactive script:
 3. Click on your Apple TV to start pairing
 4. Enter the PIN shown on your TV
 5. Once paired, you're ready to control your Apple TV!
+
+### Screen Streaming (Advanced Feature)
+
+Want to see your Apple TV screen in real-time? See **[SCREEN-STREAMING-SETUP.md](SCREEN-STREAMING-SETUP.md)** for detailed setup instructions.
+
+**Quick summary:**
+- Requires Apple TV Developer Mode
+- Provides 2-5 fps screen preview
+- Works wirelessly over WiFi
+- Great for monitoring without looking at TV
+- DRM content shows black screen (Apple limitation)
 
 ### Keyboard Shortcuts
 
