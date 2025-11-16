@@ -14,7 +14,7 @@ import { RouterView } from 'vue-router'
   width: 100%;
   height: 100vh;
   background: linear-gradient(to bottom, #1c1c1e, #2c2c2e);
-  overflow: hidden;
+  overflow-y: auto;
   position: relative;
 }
 
@@ -26,11 +26,12 @@ import { RouterView } from 'vue-router'
   height: 44px;
   -webkit-app-region: drag;
   z-index: 9999;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 /* Allow buttons and interactive elements in the drag region */
 .drag-region * {
   -webkit-app-region: no-drag;
+  pointer-events: auto;
 }
 </style>

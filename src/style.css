@@ -19,22 +19,42 @@
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
   -webkit-user-select: none;
   user-select: none;
   cursor: default;
+  -webkit-app-region: drag;
+  overflow: hidden;
 }
 
 #app {
   width: 100%;
   height: 100vh;
   margin: 0 auto;
-  text-align: center;
   -webkit-user-select: none;
   user-select: none;
+  -webkit-app-region: no-drag;
+  overflow: hidden;
+}
+
+/* Hide scrollbars but allow scrolling */
+html {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+html::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* Make all interactive elements non-draggable */
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-app-region: no-drag;
 }
 
 @layer utilities {

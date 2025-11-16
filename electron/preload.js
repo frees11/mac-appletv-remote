@@ -18,4 +18,7 @@ contextBridge.exposeInMainWorld('electron', {
       ipcRenderer.on(channel, (event, ...args) => func(...args))
     }
   },
+  openScreenWindow: (deviceId, deviceName) => {
+    return ipcRenderer.invoke('open-screen-window', deviceId, deviceName)
+  },
 })

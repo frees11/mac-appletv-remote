@@ -143,7 +143,7 @@ class ATVService:
 
             # Start new pairing session
             print(f"   Scanning for device...")
-            atvs = await pyatv.scan(identifier=identifier, timeout=5, loop=asyncio.get_event_loop())
+            atvs = await pyatv.scan(identifier=identifier, timeout=3, loop=asyncio.get_event_loop())
 
             if not atvs:
                 print(f"   ❌ Device not found during scan")
@@ -160,8 +160,14 @@ class ATVService:
                     try:
                         pairing = await pyatv.pair(config, protocol, loop=asyncio.get_event_loop())
                         print(f"   Starting pairing process...")
-                        await pairing.begin()
-                        print(f"   Pairing begun successfully")
+
+                        # Add timeout to pairing.begin() to prevent long waits
+                        try:
+                            await asyncio.wait_for(pairing.begin(), timeout=10.0)
+                            print(f"   Pairing begun successfully")
+                        except asyncio.TimeoutError:
+                            print(f"   ⚠️  Pairing begin timed out after 10 seconds, continuing anyway...")
+                            # Continue even if timeout - the device might still show PIN
 
                         if pairing.device_provides_pin:
                             # Device will show PIN, store session for later
@@ -223,8 +229,8 @@ class ATVService:
             return True
 
         try:
-            # Scan for the device
-            atvs = await pyatv.scan(identifier=identifier, timeout=5, loop=asyncio.get_event_loop())
+            # Scan for the device (reduced timeout for faster response)
+            atvs = await pyatv.scan(identifier=identifier, timeout=3, loop=asyncio.get_event_loop())
 
             if not atvs:
                 return False
@@ -264,6 +270,26 @@ class ATVService:
                 del self.connections[identifier]
             except Exception as e:
                 print(f"Error disconnecting from device {identifier}: {e}")
+
+    async def unpair_device(self, identifier: str) -> Dict[str, Any]:
+        """Unpair a device by removing its stored credentials"""
+        try:
+            # Disconnect if currently connected
+            if identifier in self.connections:
+                await self.disconnect_device(identifier)
+
+            # Remove credentials
+            if identifier in self.credentials:
+                del self.credentials[identifier]
+                self._save_credentials()
+                print(f"✅ Unpaired device {identifier}")
+                return {"success": True, "message": "Device unpaired successfully"}
+            else:
+                return {"success": False, "error": "Device was not paired"}
+
+        except Exception as e:
+            print(f"❌ Error unpairing device {identifier}: {e}")
+            return {"success": False, "error": str(e)}
 
     async def send_command(self, identifier: str, action: str, value: Optional[int] = None) -> bool:
         """Send a remote control command to the device"""

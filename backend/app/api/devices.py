@@ -66,3 +66,22 @@ async def disconnect_device(identifier: str):
         return {"success": True, "message": "Disconnected successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/devices/{identifier}/unpair")
+async def unpair_device(identifier: str):
+    """Unpair an Apple TV device by removing stored credentials"""
+    try:
+        result = await atv_service.unpair_device(identifier)
+
+        if not result.get("success"):
+            raise HTTPException(
+                status_code=400,
+                detail=result.get("error", "Failed to unpair device")
+            )
+
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

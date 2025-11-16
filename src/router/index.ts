@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import DeviceList from '@/views/DeviceList.vue'
 import RemoteControl from '@/views/RemoteControl.vue'
+import ScreenWindow from '@/views/ScreenWindow.vue'
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -15,6 +16,11 @@ const router = createRouter({
       name: 'remote',
       component: RemoteControl,
       props: true,
+    },
+    {
+      path: '/screen/:id',
+      name: 'screen',
+      component: ScreenWindow,
     },
   ],
 })

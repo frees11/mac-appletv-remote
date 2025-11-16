@@ -48,3 +48,4 @@ build/icon.png
 build/tray-icon.png
 build/tray-iconTemplate.png
 build/tray-iconTemplate@2x.png
+.claude/settings.local.json

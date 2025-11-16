@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, globalShortcut, shell } = require('electron')
+const { app, BrowserWindow, Tray, Menu, globalShortcut, shell, ipcMain } = require('electron')
 const path = require('path')
 const { spawn, execSync } = require('child_process')
 const fs = require('fs')
@@ -6,6 +6,7 @@ const fs = require('fs')
 let mainWindow = null
 let tray = null
 let backendProcess = null
+let screenWindows = {}
 
 const isDev = !app.isPackaged
 
@@ -246,8 +247,8 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 500,
     height: 800,
-    minWidth: 400,
-    minHeight: 600,
+    minWidth: 200, // umožní zmenšit na třetinu
+    minHeight: 300, // umožní zmenšit na třetinu
     icon: iconPath,
     webPreferences: {
       nodeIntegration: false,
@@ -311,7 +312,7 @@ function createTray() {
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Show Remote',
+      label: 'Show ATV Remote',
       click: () => {
         if (mainWindow) {
           mainWindow.show()
@@ -370,6 +371,56 @@ function registerGlobalShortcuts() {
     console.log(`Failed to register global shortcut ${shortcut}`)
   }
 }
+
+function createScreenWindow(deviceId, deviceName) {
+  console.log(`Creating screen window for device ${deviceId}`)
+
+  // If window already exists for this device, focus it
+  if (screenWindows[deviceId] && !screenWindows[deviceId].isDestroyed()) {
+    screenWindows[deviceId].focus()
+    return
+  }
+
+  const iconPath = isDev
+    ? path.join(__dirname, '../build/icon.png')
+    : path.join(process.resourcesPath, 'icon.png')
+
+  const screenWindow = new BrowserWindow({
+    width: 1280,
+    height: 800,
+    minWidth: 800,
+    minHeight: 600,
+    icon: iconPath,
+    title: `${deviceName} - Screen`,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
+    },
+    backgroundColor: '#000000',
+  })
+
+  // Load the screen view
+  if (isDev) {
+    screenWindow.loadURL(`http://localhost:5173/#/screen/${deviceId}?name=${encodeURIComponent(deviceName)}`)
+  } else {
+    const indexPath = path.join(__dirname, '../dist/index.html')
+    screenWindow.loadFile(indexPath, {
+      hash: `/screen/${deviceId}?name=${encodeURIComponent(deviceName)}`,
+    })
+  }
+
+  screenWindow.on('closed', () => {
+    delete screenWindows[deviceId]
+  })
+
+  screenWindows[deviceId] = screenWindow
+}
+
+// IPC handler for opening screen window
+ipcMain.handle('open-screen-window', (event, deviceId, deviceName) => {
+  createScreenWindow(deviceId, deviceName)
+})
 
 // App lifecycle
 app.whenReady().then(async () => {

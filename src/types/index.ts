@@ -25,8 +25,8 @@ export type RemoteAction =
   | 'select' | 'menu' | 'home'
   | 'play' | 'pause' | 'play_pause'
   | 'next' | 'previous'
-  | 'volume_up' | 'volume_down'
-  | 'top_menu' | 'tv'
+  | 'volume_up' | 'volume_down' | 'mute'
+  | 'top_menu' | 'tv' | 'power'
 
 export interface ControlCommand {
   device_id: string
@@ -35,6 +35,19 @@ export interface ControlCommand {
 }
 
 export interface WSMessage {
-  type: 'command' | 'get_playing' | 'ping' | 'pong' | 'command_result' | 'playback_info' | 'error'
+  type:
+    | 'command'
+    | 'get_playing'
+    | 'ping'
+    | 'pong'
+    | 'command_result'
+    | 'playback_info'
+    | 'error'
+    | 'screenshot_frame'
+    | 'screenshot_error'
+    | 'stream_started'
+    | 'stream_stopped'
+    | 'start_screenshot_stream'
+    | 'stop_screenshot_stream'
   payload: any
 }

@@ -6,6 +6,7 @@ export function useWebSocket(url: string) {
   const isConnected = ref(false)
   const lastError = ref<string | null>(null)
   const messageHandler = ref<((message: WSMessage) => void) | null>(null)
+  const connectedHandler = ref<(() => void) | null>(null)
 
   const connect = () => {
     try {
@@ -15,6 +16,11 @@ export function useWebSocket(url: string) {
         isConnected.value = true
         lastError.value = null
         console.log('WebSocket connected to', url)
+
+        // Call connected handler if set
+        if (connectedHandler.value) {
+          connectedHandler.value()
+        }
       }
 
       ws.value.onmessage = (event) => {
@@ -73,6 +79,10 @@ export function useWebSocket(url: string) {
     messageHandler.value = handler
   }
 
+  const onConnected = (handler: () => void) => {
+    connectedHandler.value = handler
+  }
+
   onUnmounted(() => {
     disconnect()
   })
@@ -85,5 +95,6 @@ export function useWebSocket(url: string) {
     disconnect,
     send,
     onMessage,
+    onConnected,
   }
 }

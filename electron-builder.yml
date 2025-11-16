@@ -65,6 +65,6 @@ publish:
 # Compression
 compression: normal
 
-# Keep backend directory accessible (not in asar) - onedir bundle
+# Keep backend executable accessible (not in asar) - onedir bundle
 asarUnpack:
-  - backend/dist/atv-backend/**/*
+  - "backend/dist/atv-backend"

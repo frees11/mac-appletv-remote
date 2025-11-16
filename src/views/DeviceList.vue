@@ -13,7 +13,9 @@ const error = ref<string | null>(null)
 const pairingDevice = ref<string | null>(null)
 const pairingPin = ref('')
 const waitingForPin = ref(false)
+const pairingLoading = ref(false)
 const timeExpired = ref(false)
+const pinInput = ref<HTMLInputElement | null>(null)
 let pinTimeout: NodeJS.Timeout | null = null
 
 const CACHE_KEY = 'atv_remote_devices'
@@ -90,28 +92,34 @@ const scanDevices = async () => {
 }
 
 const selectDevice = async (device: Device, event: Event) => {
-  // Don't navigate if clicking the pair button
-  if ((event.target as HTMLElement).closest('.pair-button')) {
+  // Don't navigate if clicking the pair/unpair button
+  const target = event.target as HTMLElement
+  if (target.closest('button')) {
     return
   }
 
-  // Try to connect directly first (like iOS)
+  // If device is not paired, start pairing immediately
+  if (!device.paired) {
+    await startPairing(device)
+    return
+  }
+
+  // If paired, try to connect and navigate to remote
   try {
     await api.connectDevice(device.identifier)
+
+    // Store device info in sessionStorage for instant display
+    sessionStorage.setItem(`device_${device.identifier}`, JSON.stringify({
+      name: device.name,
+      address: device.address,
+      model: device.model,
+      identifier: device.identifier
+    }))
+
     router.push(`/remote/${device.identifier}`)
   } catch (e) {
-    // Only show pairing if connection fails
     const errorMsg = e instanceof Error ? e.message : 'Failed to connect'
-
-    // If it's a pairing error, offer to pair
-    if (!device.paired || errorMsg.includes('pair')) {
-      const shouldPair = confirm(`Connection failed. Would you like to pair with ${device.name}?`)
-      if (shouldPair) {
-        await startPairing(device)
-      }
-    } else {
-      error.value = errorMsg
-    }
+    error.value = errorMsg
   }
 }
 
@@ -124,6 +132,7 @@ const startPairing = async (device: Device) => {
   pairingDevice.value = device.identifier
   pairingPin.value = ''
   waitingForPin.value = false
+  pairingLoading.value = true
   timeExpired.value = false
   error.value = null
 
@@ -133,13 +142,13 @@ const startPairing = async (device: Device) => {
     pinTimeout = null
   }
 
-  // Start pairing process on backend immediately
+  // Start pairing process on backend
   try {
     const result = await api.pairDevice(device.identifier)
 
     if (result.provide_pin) {
       // We show a PIN for user to enter on Apple TV
-      waitingForPin.value = false
+      pairingLoading.value = false
       pairingDevice.value = null
       alert(`Please enter this PIN on your Apple TV:\n\n${result.pin}\n\nThen click OK to continue.`)
       // After user enters PIN on Apple TV, complete pairing
@@ -159,17 +168,18 @@ const startPairing = async (device: Device) => {
       }
     } else if (result.needs_pin) {
       // Apple TV shows PIN, user enters it here
-      // Keep modal open for PIN entry
+      // NOW show the dialog - only after ATV confirmed it displayed PIN
+      pairingLoading.value = false
       waitingForPin.value = true
-      console.log('Waiting for PIN entry, modal should stay open')
+      console.log('Apple TV displayed PIN, showing dialog')
 
-      // Set timeout to show resend option after 60 seconds
+      // Set timeout to show resend option after 37 seconds
       pinTimeout = setTimeout(() => {
         timeExpired.value = true
-      }, 60000)
+      }, 37000)
     } else if (result.success) {
+      pairingLoading.value = false
       pairingDevice.value = null
-      waitingForPin.value = false
       // Update local state immediately
       const deviceIndex = devices.value.findIndex(d => d.identifier === device.identifier)
       if (deviceIndex !== -1) {
@@ -180,14 +190,14 @@ const startPairing = async (device: Device) => {
       // Refresh in background
       scanDevices()
     } else {
+      pairingLoading.value = false
       error.value = result.error || 'Pairing failed'
       pairingDevice.value = null
-      waitingForPin.value = false
     }
   } catch (e) {
+    pairingLoading.value = false
     error.value = e instanceof Error ? e.message : 'Failed to start pairing'
     pairingDevice.value = null
-    waitingForPin.value = false
   }
 }
 
@@ -254,6 +264,40 @@ const resendRequest = async () => {
   }
 }
 
+const unpairDevice = async (device: Device, event: Event) => {
+  event.stopPropagation()
+
+  const confirmed = confirm(`Are you sure you want to unpair ${device.name}?\n\nYou will need to pair again to control this device.`)
+  if (!confirmed) return
+
+  try {
+    await api.unpairDevice(device.identifier)
+
+    // Update local state immediately
+    const deviceIndex = devices.value.findIndex(d => d.identifier === device.identifier)
+    if (deviceIndex !== -1) {
+      devices.value[deviceIndex].paired = false
+      saveCachedDevices(devices.value)
+    }
+
+    alert('Device unpaired successfully!')
+    // Refresh in background
+    scanDevices()
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to unpair device'
+  }
+}
+
+// Auto-focus PIN input when pairing dialog opens
+watch(waitingForPin, (isWaiting) => {
+  if (isWaiting && !timeExpired.value) {
+    // Use nextTick to ensure DOM is updated
+    setTimeout(() => {
+      pinInput.value?.focus()
+    }, 100)
+  }
+})
+
 onMounted(() => {
   // Load cached devices immediately for instant display
   const hasCached = loadCachedDevices()
@@ -269,7 +313,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-y-auto">
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 pb-20">
       <!-- Header -->
       <div class="mb-8 text-center">
@@ -369,9 +413,10 @@ onMounted(() => {
               <p v-if="device.model" class="text-xs text-gray-500">{{ device.model }}</p>
             </div>
 
-            <!-- Pair Button -->
-            <div v-if="!device.paired" class="pt-4 border-t border-gray-700">
+            <!-- Pair/Unpair Button -->
+            <div class="pt-4 border-t border-gray-700">
               <button
+                v-if="!device.paired"
                 @click="pairDevice(device, $event)"
                 type="button"
                 class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-purple-500 transition-colors duration-200 shadow-lg shadow-purple-600/30"
@@ -381,11 +426,55 @@ onMounted(() => {
                 </svg>
                 Pair Device
               </button>
+              <button
+                v-else
+                @click="unpairDevice(device, $event)"
+                type="button"
+                class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500 transition-colors duration-200 shadow-lg shadow-red-600/30"
+              >
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                </svg>
+                Unpair Device
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Loading Modal -->
+    <Transition
+      enter-active-class="transition ease-out duration-300"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition ease-in duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="pairingLoading"
+        class="fixed inset-0 z-50 overflow-y-auto"
+      >
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <div class="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"></div>
+
+          <div class="relative transform overflow-hidden rounded-2xl bg-gray-900 border border-gray-700 px-4 pb-4 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-8">
+            <!-- Loading Spinner -->
+            <div class="flex flex-col items-center justify-center py-8">
+              <div class="mb-6">
+                <svg class="animate-spin h-16 w-16 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+              <h3 class="text-lg font-semibold text-white mb-2">Initiating Pairing</h3>
+              <p class="text-sm text-gray-400 text-center">Waiting for Apple TV to respond...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Pairing Modal -->
     <Transition
@@ -422,20 +511,25 @@ onMounted(() => {
 
               <!-- Title -->
               <div class="text-center mb-8">
-                <h3 class="text-2xl font-bold text-white mb-2">Enter PIN from Apple TV</h3>
-                <p class="text-sm text-gray-400">Look at your Apple TV screen and enter the 4-digit PIN</p>
-                <p v-if="!timeExpired" class="text-xs text-yellow-500 mt-2">⏱ Session expires in 60 seconds</p>
-                <p v-else class="text-xs text-red-500 mt-2">⏱ Session expired - please resend request</p>
+                <h3 class="text-2xl font-bold text-white mb-2">
+                  {{ timeExpired ? 'Session Expired' : 'Enter PIN from Apple TV' }}
+                </h3>
+                <p v-if="!timeExpired" class="text-sm text-gray-400">Look at your Apple TV screen and enter the 4-digit PIN</p>
+                <p v-if="!timeExpired" class="text-xs text-yellow-500 mt-2">⏱ Session expires in 37 seconds</p>
+                <p v-if="timeExpired" class="text-sm text-red-400">The pairing session has expired. Please request a new PIN.</p>
               </div>
 
               <!-- PIN Input -->
               <div class="mb-8">
-                <div class="flex gap-3 justify-center" @click="$refs.pinInput?.focus()">
+                <div class="flex gap-3 justify-center" @click="!timeExpired && $refs.pinInput?.focus()">
                   <div
                     v-for="i in 4"
                     :key="i"
-                    class="relative w-16 h-20 rounded-xl border-2 border-gray-700 bg-gray-800 flex items-center justify-center transition-all cursor-text"
-                    :class="pairingPin.length >= i ? 'border-purple-500 ring-2 ring-purple-500/20' : ''"
+                    class="relative w-16 h-20 rounded-xl border-2 bg-gray-800 flex items-center justify-center transition-all"
+                    :class="[
+                      timeExpired ? 'border-gray-700 opacity-50 cursor-not-allowed' : 'border-gray-700 cursor-text',
+                      !timeExpired && pairingPin.length >= i ? 'border-purple-500 ring-2 ring-purple-500/20' : ''
+                    ]"
                   >
                     <span class="text-3xl font-bold text-white pointer-events-none font-mono tabular-nums">
                       {{ pairingPin[i - 1] || '•' }}
@@ -450,13 +544,14 @@ onMounted(() => {
                   pattern="[0-9]*"
                   maxlength="4"
                   class="sr-only"
+                  :disabled="timeExpired"
                   autofocus
-                  @keyup.enter="pairingPin.length === 4 && submitPairing()"
+                  @keyup.enter="pairingPin.length === 4 && !timeExpired && submitPairing()"
                 />
               </div>
 
               <!-- Actions -->
-              <div class="flex gap-3">
+              <div v-if="!timeExpired" class="flex gap-3">
                 <button
                   @click="cancelPairing"
                   type="button"
@@ -465,21 +560,30 @@ onMounted(() => {
                   Cancel
                 </button>
                 <button
-                  v-if="timeExpired"
-                  @click="resendRequest"
-                  type="button"
-                  class="flex-1 rounded-lg bg-orange-600 px-4 py-3 text-sm font-semibold text-white hover:bg-orange-500 shadow-lg shadow-orange-600/30 transition-all"
-                >
-                  Resend Request
-                </button>
-                <button
-                  v-else
                   @click="submitPairing"
                   type="button"
                   :disabled="pairingPin.length !== 4"
                   class="flex-1 rounded-lg bg-purple-600 px-4 py-3 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-600/30 transition-all"
                 >
                   Submit PIN
+                </button>
+              </div>
+
+              <!-- Expired Actions -->
+              <div v-else class="flex gap-3">
+                <button
+                  @click="cancelPairing"
+                  type="button"
+                  class="flex-1 rounded-lg bg-gray-800 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700 border border-gray-700 transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  @click="resendRequest"
+                  type="button"
+                  class="flex-1 rounded-lg bg-purple-600 px-4 py-3 text-sm font-semibold text-white hover:bg-purple-500 shadow-lg shadow-purple-600/30 transition-all"
+                >
+                  Resend Request
                 </button>
               </div>
             </div>

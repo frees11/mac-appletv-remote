@@ -75,20 +75,22 @@ class ScreenshotService:
         try:
             print("🚀 Starting RSD tunnel daemon...")
 
+            # Try without sudo first (may work if permissions are set up)
             self.tunnel_process = subprocess.Popen(
-                ["sudo", "python3", "-m", "pymobiledevice3", "remote", "tunneld"],
+                ["python3", "-m", "pymobiledevice3", "remote", "tunneld"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True
             )
 
-            await asyncio.sleep(2)
+            await asyncio.sleep(3)
 
             if self.tunnel_process.poll() is None:
                 print("✅ Tunnel daemon started successfully")
                 return True
             else:
-                print(f"❌ Tunnel daemon failed to start")
+                stderr_output = self.tunnel_process.stderr.read() if self.tunnel_process.stderr else ""
+                print(f"❌ Tunnel daemon failed to start: {stderr_output}")
                 return False
 
         except Exception as e:
@@ -99,17 +101,31 @@ class ScreenshotService:
         try:
             temp_path = Path(f"/tmp/atv_screenshot_{device_id}_{int(time.time())}.png")
 
+            # Use sys.executable to ensure we use the same Python that's running this code
+            import sys
+            python_path = sys.executable
+
+            # Use sudo to match the tunnel daemon's permissions
+            cmd = [
+                "sudo", python_path, "-m", "pymobiledevice3",
+                "developer", "dvt", "screenshot",
+                str(temp_path),
+                "--tunnel", ""
+            ]
+            print(f"🔧 Running screenshot command: {' '.join(cmd)}")
+            print(f"🐍 Using Python: {python_path}")
+
+            # Use empty tunnel parameter to auto-discover the first tunneled device
             result = subprocess.run(
-                [
-                    "python3", "-m", "pymobiledevice3",
-                    "developer", "dvt", "screenshot",
-                    str(temp_path),
-                    "--tunnel", device_id
-                ],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=5
             )
+
+            print(f"📊 Screenshot command result - Return code: {result.returncode}")
+            print(f"📊 STDOUT: {result.stdout}")
+            print(f"📊 STDERR: {result.stderr}")
 
             if result.returncode == 0 and temp_path.exists():
                 img = Image.open(temp_path)
@@ -132,7 +148,11 @@ class ScreenshotService:
 
                 return base64_image
             else:
-                print(f"❌ Screenshot capture failed: {result.stderr}")
+                stderr = result.stderr or ""
+                if "tunnel" in stderr.lower() or "connection" in stderr.lower():
+                    print(f"❌ Screenshot capture failed - tunnel not running: {stderr}")
+                else:
+                    print(f"❌ Screenshot capture failed: {stderr}")
                 return None
 
         except subprocess.TimeoutExpired:
