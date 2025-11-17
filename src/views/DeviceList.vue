@@ -371,10 +371,10 @@ onMounted(() => {
           v-for="device in appleTVDevices"
           :key="device.identifier"
           @click="selectDevice(device, $event)"
-          class="group relative overflow-hidden rounded xs:rounded-md sm:rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 p-2 xs:p-3 sm:p-5 md:p-6 border border-gray-700 hover:border-purple-500/50 cursor-pointer shadow-[0_10px_15px_-3px_rgb(0_0_0/0.1),0_4px_6px_-4px_rgb(0_0_0/0.1)] hover:shadow-[0_20px_25px_-5px_rgba(168,85,247,0.4),0_8px_10px_-6px_rgba(168,85,247,0.2)] transition-all duration-300 ease-out"
+          class="group relative overflow-hidden rounded xs:rounded-md sm:rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 p-2 xs:p-3 sm:p-5 md:p-6 border border-gray-700 hover:border-purple-500/50 cursor-pointer shadow-[0_10px_15px_-3px_rgb(0_0_0/0.1),0_4px_6px_-4px_rgb(0_0_0/0.1)] hover:shadow-[0_0_20px_0_rgba(168,85,247,0.2),0_0_30px_0_rgba(168,85,247,0.1)] transition-[border-color,box-shadow,background] duration-300 ease-out"
         >
           <!-- Glow Effect -->
-          <div class="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-purple-600/0 group-hover:from-purple-500/10 group-hover:to-purple-600/10 transition-all duration-300 ease-out"></div>
+          <div class="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-purple-600/0 group-hover:from-purple-500/5 group-hover:to-purple-600/5 transition-all duration-300 ease-out"></div>
 
           <div class="relative">
             <!-- Header -->
@@ -386,25 +386,27 @@ onMounted(() => {
               </div>
               <span
                 v-if="device.paired"
-                class="inline-flex items-center gap-0.5 xs:gap-1 sm:gap-1.5 rounded-full bg-green-500/20 px-1 xs:px-1.5 sm:px-3 py-0.5 text-[8px] xs:text-[9px] sm:text-xs font-semibold text-green-400 border border-green-500/30 flex-shrink-0"
+                class="inline-flex items-center gap-0.5 xs:gap-1 sm:gap-1.5 rounded-full bg-green-500/20 px-1 xs:px-1.5 sm:px-3 py-0.5 text-[10px] xs:text-xs sm:text-xs font-semibold text-green-400 border border-green-500/30 flex-shrink-0"
               >
                 <span>✓</span>
+                <span>Paired</span>
               </span>
               <span
                 v-else
-                class="inline-flex items-center rounded-full bg-orange-500/20 px-1 xs:px-1.5 sm:px-3 py-0.5 text-[8px] xs:text-[9px] sm:text-xs font-semibold text-orange-400 border border-orange-500/30 flex-shrink-0"
+                class="inline-flex items-center gap-0.5 xs:gap-1 sm:gap-1.5 rounded-full bg-orange-500/20 px-1 xs:px-1.5 sm:px-3 py-0.5 text-[10px] xs:text-xs sm:text-xs font-semibold text-orange-400 border border-orange-500/30 flex-shrink-0"
               >
                 <span>⚠</span>
+                <span>Not Paired</span>
               </span>
             </div>
 
             <!-- Device Info -->
             <div class="mb-1.5 xs:mb-2 sm:mb-4">
-              <h3 class="text-xs xs:text-sm sm:text-lg font-semibold text-white mb-0.5 group-hover:text-purple-300 transition-colors duration-300 line-clamp-1">
+              <h3 class="text-sm xs:text-base sm:text-lg font-semibold text-white mb-0.5 group-hover:text-purple-300 transition-colors duration-300 ease-out line-clamp-1">
                 {{ device.name }}
               </h3>
-              <p class="text-[9px] xs:text-[10px] sm:text-sm text-gray-400 font-mono mb-0.5 break-all line-clamp-1">{{ device.address }}</p>
-              <p v-if="device.model" class="text-[8px] xs:text-[9px] sm:text-xs text-gray-500 line-clamp-1">{{ device.model }}</p>
+              <p class="text-[11px] xs:text-xs sm:text-sm text-gray-400 font-mono mb-0.5 break-all line-clamp-1">{{ device.address }}</p>
+              <p v-if="device.model" class="text-[10px] xs:text-xs sm:text-xs text-gray-500 line-clamp-1">{{ device.model }}</p>
             </div>
 
             <!-- Pair/Unpair Button -->

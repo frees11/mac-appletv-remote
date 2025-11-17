@@ -18,7 +18,23 @@ const playbackInfo = ref<PlaybackInfo | null>(null)
 const deviceName = ref<string>('')
 const deviceAddress = ref<string>('')
 const menuPressStart = ref<number | null>(null)
+const tvPressStart = ref<number | null>(null)
+const playPausePressStart = ref<number | null>(null)
+const powerPressStart = ref<number | null>(null)
+const volumeUpInterval = ref<number | null>(null)
+const volumeDownInterval = ref<number | null>(null)
 const LONG_PRESS_DURATION = 600
+const VOLUME_REPEAT_INTERVAL = 100
+
+const menuPressProgress = ref(0)
+const tvPressProgress = ref(0)
+const playPausePressProgress = ref(0)
+const powerPressProgress = ref(0)
+
+let menuAnimationFrame: number | null = null
+let tvAnimationFrame: number | null = null
+let playPauseAnimationFrame: number | null = null
+let powerAnimationFrame: number | null = null
 const isElectron = ref(typeof window !== 'undefined' && (window as any).electron)
 const remoteRef = ref<HTMLElement | null>(null)
 const wrapperRef = ref<HTMLElement | null>(null)
@@ -153,13 +169,65 @@ const sendCommand = (action: RemoteAction) => {
   }
 }
 
+const animateMenuProgress = () => {
+  if (menuPressStart.value) {
+    const elapsed = Date.now() - menuPressStart.value
+    menuPressProgress.value = Math.min(100, (elapsed / LONG_PRESS_DURATION) * 100)
+
+    if (menuPressProgress.value < 100) {
+      menuAnimationFrame = requestAnimationFrame(animateMenuProgress)
+    }
+  }
+}
+
+const animateTvProgress = () => {
+  if (tvPressStart.value) {
+    const elapsed = Date.now() - tvPressStart.value
+    tvPressProgress.value = Math.min(100, (elapsed / LONG_PRESS_DURATION) * 100)
+
+    if (tvPressProgress.value < 100) {
+      tvAnimationFrame = requestAnimationFrame(animateTvProgress)
+    }
+  }
+}
+
+const animatePlayPauseProgress = () => {
+  if (playPausePressStart.value) {
+    const elapsed = Date.now() - playPausePressStart.value
+    playPausePressProgress.value = Math.min(100, (elapsed / LONG_PRESS_DURATION) * 100)
+
+    if (playPausePressProgress.value < 100) {
+      playPauseAnimationFrame = requestAnimationFrame(animatePlayPauseProgress)
+    }
+  }
+}
+
+const animatePowerProgress = () => {
+  if (powerPressStart.value) {
+    const elapsed = Date.now() - powerPressStart.value
+    powerPressProgress.value = Math.min(100, (elapsed / LONG_PRESS_DURATION) * 100)
+
+    if (powerPressProgress.value < 100) {
+      powerAnimationFrame = requestAnimationFrame(animatePowerProgress)
+    }
+  }
+}
+
 const handleMenuPress = (e: MouseEvent | TouchEvent) => {
   e.preventDefault()
   menuPressStart.value = Date.now()
+  menuPressProgress.value = 0
+  menuAnimationFrame = requestAnimationFrame(animateMenuProgress)
 }
 
 const handleMenuRelease = (e: MouseEvent | TouchEvent) => {
   e.preventDefault()
+
+  if (menuAnimationFrame) {
+    cancelAnimationFrame(menuAnimationFrame)
+    menuAnimationFrame = null
+  }
+
   if (menuPressStart.value) {
     const pressDuration = Date.now() - menuPressStart.value
 
@@ -170,11 +238,173 @@ const handleMenuRelease = (e: MouseEvent | TouchEvent) => {
     }
 
     menuPressStart.value = null
+    menuPressProgress.value = 0
   }
 }
 
 const handleMenuCancel = () => {
   menuPressStart.value = null
+  menuPressProgress.value = 0
+
+  if (menuAnimationFrame) {
+    cancelAnimationFrame(menuAnimationFrame)
+    menuAnimationFrame = null
+  }
+}
+
+const handleTvPress = (e: MouseEvent | TouchEvent) => {
+  e.preventDefault()
+  tvPressStart.value = Date.now()
+  tvPressProgress.value = 0
+  tvAnimationFrame = requestAnimationFrame(animateTvProgress)
+}
+
+const handleTvRelease = (e: MouseEvent | TouchEvent) => {
+  e.preventDefault()
+
+  if (tvAnimationFrame) {
+    cancelAnimationFrame(tvAnimationFrame)
+    tvAnimationFrame = null
+  }
+
+  if (tvPressStart.value) {
+    const pressDuration = Date.now() - tvPressStart.value
+
+    if (pressDuration >= LONG_PRESS_DURATION) {
+      sendCommand('control_center')
+    } else {
+      sendCommand('tv')
+    }
+
+    tvPressStart.value = null
+    tvPressProgress.value = 0
+  }
+}
+
+const handleTvCancel = () => {
+  tvPressStart.value = null
+  tvPressProgress.value = 0
+
+  if (tvAnimationFrame) {
+    cancelAnimationFrame(tvAnimationFrame)
+    tvAnimationFrame = null
+  }
+}
+
+const handlePlayPausePress = (e: MouseEvent | TouchEvent) => {
+  e.preventDefault()
+  playPausePressStart.value = Date.now()
+  playPausePressProgress.value = 0
+  playPauseAnimationFrame = requestAnimationFrame(animatePlayPauseProgress)
+}
+
+const handlePlayPauseRelease = (e: MouseEvent | TouchEvent) => {
+  e.preventDefault()
+
+  if (playPauseAnimationFrame) {
+    cancelAnimationFrame(playPauseAnimationFrame)
+    playPauseAnimationFrame = null
+  }
+
+  if (playPausePressStart.value) {
+    const pressDuration = Date.now() - playPausePressStart.value
+
+    if (pressDuration >= LONG_PRESS_DURATION) {
+      sendCommand('stop')
+    } else {
+      sendCommand('play_pause')
+    }
+
+    playPausePressStart.value = null
+    playPausePressProgress.value = 0
+  }
+}
+
+const handlePlayPauseCancel = () => {
+  playPausePressStart.value = null
+  playPausePressProgress.value = 0
+
+  if (playPauseAnimationFrame) {
+    cancelAnimationFrame(playPauseAnimationFrame)
+    playPauseAnimationFrame = null
+  }
+}
+
+const handlePowerPress = (e: MouseEvent | TouchEvent) => {
+  e.preventDefault()
+  powerPressStart.value = Date.now()
+  powerPressProgress.value = 0
+  powerAnimationFrame = requestAnimationFrame(animatePowerProgress)
+}
+
+const handlePowerRelease = (e: MouseEvent | TouchEvent) => {
+  e.preventDefault()
+
+  if (powerAnimationFrame) {
+    cancelAnimationFrame(powerAnimationFrame)
+    powerAnimationFrame = null
+  }
+
+  if (powerPressStart.value) {
+    const pressDuration = Date.now() - powerPressStart.value
+
+    if (pressDuration >= LONG_PRESS_DURATION) {
+      sendCommand('power_off')
+    } else {
+      sendCommand('power')
+    }
+
+    powerPressStart.value = null
+    powerPressProgress.value = 0
+  }
+}
+
+const handlePowerCancel = () => {
+  powerPressStart.value = null
+  powerPressProgress.value = 0
+
+  if (powerAnimationFrame) {
+    cancelAnimationFrame(powerAnimationFrame)
+    powerAnimationFrame = null
+  }
+}
+
+const handleVolumeUpStart = (e: MouseEvent | TouchEvent) => {
+  e.preventDefault()
+
+  sendCommand('volume_up')
+
+  volumeUpInterval.value = window.setInterval(() => {
+    sendCommand('volume_up')
+  }, VOLUME_REPEAT_INTERVAL)
+}
+
+const handleVolumeUpEnd = (e: MouseEvent | TouchEvent) => {
+  e.preventDefault()
+
+  if (volumeUpInterval.value !== null) {
+    clearInterval(volumeUpInterval.value)
+    volumeUpInterval.value = null
+  }
+}
+
+const handleVolumeDownStart = (e: MouseEvent | TouchEvent) => {
+  e.preventDefault()
+
+  sendCommand('volume_down')
+
+  volumeDownInterval.value = window.setInterval(() => {
+    sendCommand('volume_down')
+  }, VOLUME_REPEAT_INTERVAL)
+}
+
+const handleVolumeDownEnd = (e: MouseEvent | TouchEvent) => {
+  e.preventDefault()
+
+  if (volumeDownInterval.value !== null) {
+    clearInterval(volumeDownInterval.value)
+    volumeDownInterval.value = null
+  }
 }
 
 const setPressedDirection = (e: MouseEvent | TouchEvent) => {
@@ -481,6 +711,12 @@ onUnmounted(() => {
     resizeTimeout = null
   }
 
+  // Clean up progress animations
+  if (menuAnimationFrame) cancelAnimationFrame(menuAnimationFrame)
+  if (tvAnimationFrame) cancelAnimationFrame(tvAnimationFrame)
+  if (playPauseAnimationFrame) cancelAnimationFrame(playPauseAnimationFrame)
+  if (powerAnimationFrame) cancelAnimationFrame(powerAnimationFrame)
+
   // Clean up playback interval
   if (playbackInterval) {
     clearInterval(playbackInterval)
@@ -521,16 +757,6 @@ onUnmounted(() => {
               <h1 class="text-xl font-bold text-[#1d1d1f]">{{ deviceName || 'Apple TV' }}</h1>
               <p v-if="deviceAddress" class="text-xs text-apple-gray-400 mt-1">{{ deviceAddress }}</p>
             </div>
-
-            <!-- Screen Stream Toggle -->
-            <div v-if="isElectron" class="flex justify-center mt-2">
-              <button
-                @click="openScreenInWindow"
-                class="px-4 py-2 rounded-lg text-xs font-medium transition-all bg-white/60 text-[#1d1d1f] border border-black/10 hover:bg-white/80"
-              >
-                📺 Open Screen View
-              </button>
-            </div>
           </div>
 
           <!-- Now Playing Info -->
@@ -561,10 +787,37 @@ onUnmounted(() => {
             <!-- Power Button -->
             <div class="w-full flex justify-end -mb-2">
               <button
-                @click="sendCommand('power')"
-                class="w-8 h-8 bg-white/85 border border-black/8 rounded-full text-[#1d1d1f] transition-all hover:bg-white/95 hover:scale-105 active:scale-95 active:bg-white flex items-center justify-center p-0"
+                @mousedown="handlePowerPress"
+                @mouseup="handlePowerRelease"
+                @mouseleave="handlePowerCancel"
+                @touchstart="handlePowerPress"
+                @touchend="handlePowerRelease"
+                @touchcancel="handlePowerCancel"
+                class="relative w-8 h-8 bg-white/85 border border-black/8 rounded-full text-[#1d1d1f] transition-all hover:bg-white/95 hover:scale-105 active:scale-95 active:bg-white flex items-center justify-center p-0 overflow-visible"
               >
-                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <!-- Progress Ring -->
+                <svg
+                  class="absolute -inset-[2px] w-[36px] h-[36px] pointer-events-none"
+                  style="transform: rotate(-90deg)"
+                >
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="16"
+                    fill="none"
+                    :stroke="powerPressProgress > 0 ? 'rgba(29, 29, 31, 0.6)' : 'transparent'"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    :stroke-dasharray="100.5"
+                    :stroke-dashoffset="100.5 - (powerPressProgress / 100) * 100.5"
+                    :style="{
+                      transition: powerPressProgress > 0 ? 'none' : 'stroke 0.2s ease',
+                      filter: powerPressProgress > 0 ? 'drop-shadow(0 0 4px rgba(29, 29, 31, 0.4))' : 'none'
+                    }"
+                  />
+                </svg>
+
+                <svg class="w-4 h-4 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M12 2v10M15.5 6.5a7 7 0 1 1-7 0"/>
                 </svg>
               </button>
@@ -596,28 +849,28 @@ onUnmounted(() => {
                   <!-- Direction arrows -->
                   <!-- Up arrow -->
                   <div class="absolute top-[3%] left-1/2 -translate-x-1/2">
-                    <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                       <path d="M5 12l7-7 7 7"/>
                     </svg>
                   </div>
 
                   <!-- Down arrow -->
                   <div class="absolute bottom-[3%] left-1/2 -translate-x-1/2">
-                    <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                       <path d="M19 12l-7 7-7-7"/>
                     </svg>
                   </div>
 
                   <!-- Left arrow -->
                   <div class="absolute left-[3%] top-1/2 -translate-y-1/2">
-                    <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                       <path d="M12 19l-7-7 7-7"/>
                     </svg>
                   </div>
 
                   <!-- Right arrow -->
                   <div class="absolute right-[3%] top-1/2 -translate-y-1/2">
-                    <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                       <path d="M12 5l7 7-7 7"/>
                     </svg>
                   </div>
@@ -634,17 +887,66 @@ onUnmounted(() => {
                 @touchstart="handleMenuPress"
                 @touchend="handleMenuRelease"
                 @touchcancel="handleMenuCancel"
-                class="w-[70px] h-[70px] max-sm:w-15 max-sm:h-15 bg-gradient-radial from-apple-gray-700 to-apple-gray-900 rounded-full text-apple-gray-50 transition-all shadow-[inset_0_1px_4px_rgba(0,0,0,0.3),0_3px_8px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 active:shadow-[inset_0_1px_6px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.2)] flex items-center justify-center"
+                class="relative w-[70px] h-[70px] max-sm:w-15 max-sm:h-15 bg-gradient-radial from-apple-gray-700 to-apple-gray-900 rounded-full text-apple-gray-50 transition-all shadow-[inset_0_1px_4px_rgba(0,0,0,0.3),0_3px_8px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 active:shadow-[inset_0_1px_6px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.2)] flex items-center justify-center overflow-visible"
               >
-                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <!-- Progress Ring -->
+                <svg
+                  class="absolute -inset-[2px] w-[74px] h-[74px] pointer-events-none"
+                  style="transform: rotate(-90deg)"
+                >
+                  <circle
+                    cx="37"
+                    cy="37"
+                    r="35"
+                    fill="none"
+                    :stroke="menuPressProgress > 0 ? 'rgba(255, 255, 255, 0.8)' : 'transparent'"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    :stroke-dasharray="219.8"
+                    :stroke-dashoffset="219.8 - (menuPressProgress / 100) * 219.8"
+                    :style="{
+                      transition: menuPressProgress > 0 ? 'none' : 'stroke 0.2s ease',
+                      filter: menuPressProgress > 0 ? 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.6))' : 'none'
+                    }"
+                  />
+                </svg>
+
+                <svg class="w-6 h-6 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M15 18l-6-6 6-6"/>
                 </svg>
               </button>
               <button
-                @click="sendCommand('tv')"
-                class="w-[70px] h-[70px] max-sm:w-15 max-sm:h-15 bg-gradient-radial from-apple-gray-700 to-apple-gray-900 rounded-full text-apple-gray-50 transition-all shadow-[inset_0_1px_4px_rgba(0,0,0,0.3),0_3px_8px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 active:shadow-[inset_0_1px_6px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.2)] flex items-center justify-center"
+                @mousedown="handleTvPress"
+                @mouseup="handleTvRelease"
+                @mouseleave="handleTvCancel"
+                @touchstart="handleTvPress"
+                @touchend="handleTvRelease"
+                @touchcancel="handleTvCancel"
+                class="relative w-[70px] h-[70px] max-sm:w-15 max-sm:h-15 bg-gradient-radial from-apple-gray-700 to-apple-gray-900 rounded-full text-apple-gray-50 transition-all shadow-[inset_0_1px_4px_rgba(0,0,0,0.3),0_3px_8px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 active:shadow-[inset_0_1px_6px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.2)] flex items-center justify-center overflow-visible"
               >
-                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <!-- Progress Ring -->
+                <svg
+                  class="absolute -inset-[2px] w-[74px] h-[74px] pointer-events-none"
+                  style="transform: rotate(-90deg)"
+                >
+                  <circle
+                    cx="37"
+                    cy="37"
+                    r="35"
+                    fill="none"
+                    :stroke="tvPressProgress > 0 ? 'rgba(255, 255, 255, 0.8)' : 'transparent'"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    :stroke-dasharray="219.8"
+                    :stroke-dashoffset="219.8 - (tvPressProgress / 100) * 219.8"
+                    :style="{
+                      transition: tvPressProgress > 0 ? 'none' : 'stroke 0.2s ease',
+                      filter: tvPressProgress > 0 ? 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.6))' : 'none'
+                    }"
+                  />
+                </svg>
+
+                <svg class="w-6 h-6 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="2" y="7" width="20" height="13" rx="2"/>
                   <path d="M17 2l-5 5-5-5"/>
                 </svg>
@@ -654,17 +956,49 @@ onUnmounted(() => {
             <!-- Play/Pause and Volume Up -->
             <div class="flex gap-4 justify-center w-full max-w-60 max-sm:max-w-50">
               <button
-                @click="sendCommand('play_pause')"
-                class="w-[70px] h-[70px] max-sm:w-15 max-sm:h-15 bg-gradient-radial from-apple-gray-700 to-apple-gray-900 rounded-full text-apple-gray-50 transition-all shadow-[inset_0_1px_4px_rgba(0,0,0,0.3),0_3px_8px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 active:shadow-[inset_0_1px_6px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.2)] flex items-center justify-center"
+                @mousedown="handlePlayPausePress"
+                @mouseup="handlePlayPauseRelease"
+                @mouseleave="handlePlayPauseCancel"
+                @touchstart="handlePlayPausePress"
+                @touchend="handlePlayPauseRelease"
+                @touchcancel="handlePlayPauseCancel"
+                class="relative w-[70px] h-[70px] max-sm:w-15 max-sm:h-15 bg-gradient-radial from-apple-gray-700 to-apple-gray-900 rounded-full text-apple-gray-50 transition-all shadow-[inset_0_1px_4px_rgba(0,0,0,0.3),0_3px_8px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 active:shadow-[inset_0_1px_6px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.2)] flex items-center justify-center overflow-visible"
               >
-                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                <!-- Progress Ring -->
+                <svg
+                  class="absolute -inset-[2px] w-[74px] h-[74px] pointer-events-none"
+                  style="transform: rotate(-90deg)"
+                >
+                  <circle
+                    cx="37"
+                    cy="37"
+                    r="35"
+                    fill="none"
+                    :stroke="playPausePressProgress > 0 ? 'rgba(255, 255, 255, 0.8)' : 'transparent'"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    :stroke-dasharray="219.8"
+                    :stroke-dashoffset="219.8 - (playPausePressProgress / 100) * 219.8"
+                    :style="{
+                      transition: playPausePressProgress > 0 ? 'none' : 'stroke 0.2s ease',
+                      filter: playPausePressProgress > 0 ? 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.6))' : 'none'
+                    }"
+                  />
+                </svg>
+
+                <svg class="w-6 h-6 relative z-10" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M6 5v14l8-7z"/>
                   <rect x="16" y="5" width="2" height="14" rx="1"/>
                   <rect x="20" y="5" width="2" height="14" rx="1"/>
                 </svg>
               </button>
               <button
-                @click="sendCommand('volume_up')"
+                @mousedown="handleVolumeUpStart"
+                @mouseup="handleVolumeUpEnd"
+                @mouseleave="handleVolumeUpEnd"
+                @touchstart="handleVolumeUpStart"
+                @touchend="handleVolumeUpEnd"
+                @touchcancel="handleVolumeUpEnd"
                 class="w-[70px] h-[70px] max-sm:w-15 max-sm:h-15 bg-gradient-radial from-apple-gray-700 to-apple-gray-900 rounded-t-[35px] rounded-b-lg text-apple-gray-50 transition-all shadow-[inset_0_1px_4px_rgba(0,0,0,0.3),0_3px_8px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 active:shadow-[inset_0_1px_6px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.2)] flex items-center justify-center"
               >
                 <span class="text-[2rem] font-light leading-none">+</span>
@@ -682,7 +1016,12 @@ onUnmounted(() => {
                 </svg>
               </button>
               <button
-                @click="sendCommand('volume_down')"
+                @mousedown="handleVolumeDownStart"
+                @mouseup="handleVolumeDownEnd"
+                @mouseleave="handleVolumeDownEnd"
+                @touchstart="handleVolumeDownStart"
+                @touchend="handleVolumeDownEnd"
+                @touchcancel="handleVolumeDownEnd"
                 class="w-[70px] h-[70px] max-sm:w-15 max-sm:h-15 bg-gradient-radial from-apple-gray-700 to-apple-gray-900 rounded-t-lg rounded-b-[35px] text-apple-gray-50 transition-all shadow-[inset_0_1px_4px_rgba(0,0,0,0.3),0_3px_8px_rgba(0,0,0,0.2)] hover:scale-105 active:scale-95 active:shadow-[inset_0_1px_6px_rgba(0,0,0,0.4),0_2px_6px_rgba(0,0,0,0.2)] flex items-center justify-center"
               >
                 <span class="text-[2rem] font-light leading-none">−</span>
@@ -734,6 +1073,14 @@ onUnmounted(() => {
   transition:
     transform 0.18s cubic-bezier(.25,.8,.25,1),
     transform-origin 0.18s cubic-bezier(.25,.8,.25,1);
+}
+
+/* Disable transition for instant press effect */
+.touchpad.pressed-left,
+.touchpad.pressed-right,
+.touchpad.pressed-top,
+.touchpad.pressed-bottom {
+  transition: none;
 }
 
 /* Click left -> axis right, left side inward */

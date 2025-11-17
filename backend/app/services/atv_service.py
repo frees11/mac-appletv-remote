@@ -320,16 +320,19 @@ class ATVService:
                 "right": remote.right,
                 "select": remote.select,
                 "menu": remote.menu,
-                "home": remote.home,
+                "home": remote.top_menu,  # Use top_menu instead of home (home triggers turn_off in pyatv)
                 "play": remote.play,
                 "pause": remote.pause,
                 "play_pause": remote.play_pause,
+                "stop": remote.stop,  # Stop playback
                 "next": remote.next,
                 "previous": remote.previous,
                 "volume_up": remote.volume_up,
                 "volume_down": remote.volume_down,
                 "top_menu": remote.top_menu,
-                "tv": remote.home,  # TV button maps to home
+                "tv": remote.top_menu,  # TV button short press
+                "control_center": remote.home_hold,  # Control Center (long press TV/home)
+                "power_off": remote.suspend,  # Sleep/standby (long press Power)
             }
 
             if action in action_map:

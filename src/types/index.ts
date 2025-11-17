@@ -23,10 +23,11 @@ export interface PlaybackInfo {
 export type RemoteAction =
   | 'up' | 'down' | 'left' | 'right'
   | 'select' | 'menu' | 'home'
-  | 'play' | 'pause' | 'play_pause'
+  | 'play' | 'pause' | 'play_pause' | 'stop'
   | 'next' | 'previous'
   | 'volume_up' | 'volume_down' | 'mute'
-  | 'top_menu' | 'tv' | 'power'
+  | 'top_menu' | 'tv' | 'power' | 'power_off'
+  | 'control_center'
 
 export interface ControlCommand {
   device_id: string

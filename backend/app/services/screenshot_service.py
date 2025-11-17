@@ -105,9 +105,9 @@ class ScreenshotService:
             import sys
             python_path = sys.executable
 
-            # Use sudo to match the tunnel daemon's permissions
+            # Run pymobiledevice3 screenshot command
             cmd = [
-                "sudo", python_path, "-m", "pymobiledevice3",
+                python_path, "-m", "pymobiledevice3",
                 "developer", "dvt", "screenshot",
                 str(temp_path),
                 "--tunnel", ""
