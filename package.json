@@ -1,5 +1,6 @@
 {
   "name": "atv-remote",
+  "productName": "ATV Remote",
   "version": "1.0.5",
   "description": "Multiplatform ATV Remote Control",
   "main": "electron/main.js",

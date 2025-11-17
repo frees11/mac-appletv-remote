@@ -400,7 +400,7 @@ onMounted(() => {
 
             <!-- Device Info -->
             <div class="mb-1.5 xs:mb-2 sm:mb-4">
-              <h3 class="text-xs xs:text-sm sm:text-lg font-semibold text-white mb-0.5 group-hover:text-purple-300 transition-colors line-clamp-1">
+              <h3 class="text-xs xs:text-sm sm:text-lg font-semibold text-white mb-0.5 group-hover:text-purple-300 transition-colors duration-300 line-clamp-1">
                 {{ device.name }}
               </h3>
               <p class="text-[9px] xs:text-[10px] sm:text-sm text-gray-400 font-mono mb-0.5 break-all line-clamp-1">{{ device.address }}</p>
@@ -424,9 +424,9 @@ onMounted(() => {
                 v-else
                 @click="unpairDevice(device, $event)"
                 type="button"
-                class="w-full inline-flex items-center justify-center gap-0.5 xs:gap-1 sm:gap-2 rounded xs:rounded-md sm:rounded-lg bg-red-600 px-1.5 xs:px-2 sm:px-4 py-1 xs:py-1.5 sm:py-2.5 text-[10px] xs:text-[11px] sm:text-sm font-semibold text-white hover:bg-red-500 transition-colors duration-200 shadow-lg shadow-red-600/30"
+                class="w-full inline-flex items-center justify-center gap-1 text-xs text-red-500/70 hover:text-red-500 transition-colors duration-200"
               >
-                <svg class="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
+                <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                 </svg>
                 <span>Unpair</span>
