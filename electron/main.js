@@ -348,29 +348,30 @@ function createTray() {
   })
 }
 
-function registerGlobalShortcuts() {
-  // Register Cmd+Shift+R (Mac) or Ctrl+Shift+R (Win/Linux)
-  const shortcut = process.platform === 'darwin' ? 'Command+Shift+R' : 'Ctrl+Shift+R'
-
-  const registered = globalShortcut.register(shortcut, () => {
-    if (mainWindow) {
-      if (mainWindow.isVisible()) {
-        mainWindow.hide()
-      } else {
-        mainWindow.show()
-        mainWindow.focus()
-      }
-    } else {
-      createWindow()
-    }
-  })
-
-  if (registered) {
-    console.log(`Global shortcut ${shortcut} registered`)
-  } else {
-    console.log(`Failed to register global shortcut ${shortcut}`)
-  }
-}
+// Global shortcuts disabled
+// function registerGlobalShortcuts() {
+//   // Register Cmd+Shift+R (Mac) or Ctrl+Shift+R (Win/Linux)
+//   const shortcut = process.platform === 'darwin' ? 'Command+Shift+R' : 'Ctrl+Shift+R'
+//
+//   const registered = globalShortcut.register(shortcut, () => {
+//     if (mainWindow) {
+//       if (mainWindow.isVisible()) {
+//         mainWindow.hide()
+//       } else {
+//         mainWindow.show()
+//         mainWindow.focus()
+//       }
+//     } else {
+//       createWindow()
+//     }
+//   })
+//
+//   if (registered) {
+//     console.log(`Global shortcut ${shortcut} registered`)
+//   } else {
+//     console.log(`Failed to register global shortcut ${shortcut}`)
+//   }
+// }
 
 function createScreenWindow(deviceId, deviceName) {
   console.log(`Creating screen window for device ${deviceId}`)
@@ -463,7 +464,7 @@ app.whenReady().then(async () => {
   console.log('Creating window...')
   createWindow()
   createTray()
-  registerGlobalShortcuts()
+  // registerGlobalShortcuts() // Disabled
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWebSocket } from '@/composables/useWebSocket'
 import { useApi } from '@/composables/useApi'
@@ -21,32 +21,120 @@ const menuPressStart = ref<number | null>(null)
 const LONG_PRESS_DURATION = 600
 const isElectron = ref(typeof window !== 'undefined' && (window as any).electron)
 const remoteRef = ref<HTMLElement | null>(null)
+const wrapperRef = ref<HTMLElement | null>(null)
+const touchpadPressedDirection = ref<string | null>(null)
 
-// Calculate initial scale immediately
+// Store unscaled natural height
+const naturalHeight = ref(0)
+
+// Calculate scale based on window dimensions
 const calculateScale = () => {
-  const padding = 16 * 2 // 1rem on each side = 32px total
-  const safetyMargin = 32 // Additional safety margin (double)
+  const horizontalPadding = 16 * 2 // 1rem on each side = 32px total
+  const topPadding = 48 // 3rem top padding
+  const bottomPadding = 0 // No bottom padding
+  const topMargin = 60 // Further reduced top margin
+  const safetyMargin = 2 // Almost no safety margin
 
-  const availableWidth = window.innerWidth - padding - safetyMargin
-  const availableHeight = window.innerHeight - padding - safetyMargin
+  const availableWidth = window.innerWidth - horizontalPadding - safetyMargin
+  const availableHeight = window.innerHeight - topPadding - bottomPadding - topMargin - safetyMargin
 
   const baseWidth = 380
-  // Get actual height if available, otherwise use approximate height
-  const baseHeight = remoteRef.value?.scrollHeight || 850
+  // Fallback: estimate height without "Now Playing" block (~750px)
+  const baseHeight = naturalHeight.value > 0 ? naturalHeight.value : 750
 
   const scaleX = availableWidth / baseWidth
   const scaleY = availableHeight / baseHeight
 
-  // Use the smaller scale to ensure everything fits (contain behavior)
+  // Use the smaller scale to ensure everything fits
   const calculatedScale = Math.min(scaleX, scaleY)
+  const finalScale = Math.min(0.95, Math.max(0.3, calculatedScale))
 
-  return Math.min(0.95, Math.max(0.3, calculatedScale))
+  const scaledWidth = baseWidth * finalScale
+  const scaledHeight = baseHeight * finalScale
+
+  console.log('Scale calc:',
+    `window=${window.innerWidth}x${window.innerHeight}`,
+    `avail=${Math.round(availableWidth)}x${Math.round(availableHeight)}`,
+    `base=${baseWidth}x${baseHeight}`,
+    `scaleX=${scaleX.toFixed(2)}`,
+    `scaleY=${scaleY.toFixed(2)}`,
+    `final=${finalScale.toFixed(2)}`,
+    `fits=${scaledWidth <= availableWidth && scaledHeight <= availableHeight ? 'YES' : 'NO'}`
+  )
+
+  return finalScale
 }
 
-const scale = ref(calculateScale())
+// Initialize with a safe default scale
+const scale = ref(0.7)
+
+const updateNaturalHeight = () => {
+  if (!wrapperRef.value || !remoteRef.value) return
+
+  // Save current scale and temporarily set to 1 for accurate measurement
+  const currentScale = scale.value
+  const needsReset = Math.abs(currentScale - 1) > 0.01
+
+  if (needsReset) {
+    // Temporarily set to 1 to get true height
+    scale.value = 1
+  }
+
+  // Wait for DOM update if we changed scale
+  const measure = () => {
+    if (!remoteRef.value) {
+      console.warn('measure: no remoteRef!')
+      return
+    }
+
+    const scrollHeight = remoteRef.value.scrollHeight
+    const offsetHeight = remoteRef.value.offsetHeight
+
+    // Use the larger value
+    const measuredHeight = Math.max(scrollHeight, offsetHeight)
+
+    console.log('Natural height measured:',
+      `scroll=${scrollHeight}px`,
+      `offset=${offsetHeight}px`,
+      `measured=${measuredHeight}px`,
+      `wasScaled=${needsReset}`,
+      `previous=${naturalHeight.value}px`,
+      `hasPlayback=${!!playbackInfo.value?.title}`
+    )
+
+    // Only update if we got a valid measurement
+    if (measuredHeight > 0) {
+      naturalHeight.value = measuredHeight
+    } else {
+      console.warn('Invalid height measurement, keeping previous value:', naturalHeight.value)
+    }
+
+    // Restore scale if we changed it
+    if (needsReset) {
+      scale.value = currentScale
+    }
+
+    // Recalculate with new natural height
+    updateScale()
+  }
+
+  if (needsReset) {
+    // Need to wait for DOM update after scale change
+    nextTick(measure)
+  } else {
+    // Can measure immediately
+    measure()
+  }
+}
 
 const updateScale = () => {
-  scale.value = calculateScale()
+  const newScale = calculateScale()
+
+  if (Math.abs(newScale - scale.value) > 0.01) {
+    console.log('Scale changed:', scale.value.toFixed(2), '->', newScale.toFixed(2))
+  }
+
+  scale.value = newScale
 }
 
 const sendCommand = (action: RemoteAction) => {
@@ -87,6 +175,63 @@ const handleMenuRelease = (e: MouseEvent | TouchEvent) => {
 
 const handleMenuCancel = () => {
   menuPressStart.value = null
+}
+
+const setPressedDirection = (e: MouseEvent | TouchEvent) => {
+  const target = e.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+
+  let clientX: number
+  let clientY: number
+
+  if (e instanceof TouchEvent && e.touches.length > 0) {
+    clientX = e.touches[0].clientX
+    clientY = e.touches[0].clientY
+  } else if (e instanceof MouseEvent) {
+    clientX = e.clientX
+    clientY = e.clientY
+  } else {
+    return
+  }
+
+  const x = clientX - rect.left
+  const y = clientY - rect.top
+  const cx = rect.width / 2
+  const cy = rect.height / 2
+  const dx = x - cx
+  const dy = y - cy
+
+  // Determine direction based on which offset is greater
+  if (Math.abs(dx) > Math.abs(dy)) {
+    touchpadPressedDirection.value = dx < 0 ? 'pressed-left' : 'pressed-right'
+  } else {
+    touchpadPressedDirection.value = dy < 0 ? 'pressed-top' : 'pressed-bottom'
+  }
+
+  console.log('Pressed direction:', touchpadPressedDirection.value, { dx, dy, x, y, cx, cy })
+}
+
+const clearPressedDirection = () => {
+  console.log('Clearing pressed direction')
+  touchpadPressedDirection.value = null
+}
+
+let animationClearTimeout: ReturnType<typeof setTimeout> | null = null
+
+const handleTouchpadPress = (e: MouseEvent | TouchEvent) => {
+  if (e instanceof MouseEvent && e.button !== 0) return // Only left mouse button
+
+  setPressedDirection(e)
+
+  // Clear any existing timeout
+  if (animationClearTimeout) {
+    clearTimeout(animationClearTimeout)
+  }
+
+  // Auto-clear animation after 200ms
+  animationClearTimeout = setTimeout(() => {
+    clearPressedDirection()
+  }, 200)
 }
 
 const handleTouchpadClick = (e: MouseEvent) => {
@@ -178,29 +323,100 @@ const handleKeyDown = (e: KeyboardEvent) => {
 
 let lastWidth = window.innerWidth
 let lastHeight = window.innerHeight
+let resizeTimeout: ReturnType<typeof setTimeout> | null = null
 
 const handleResize = () => {
   const currentWidth = window.innerWidth
   const currentHeight = window.innerHeight
+
+  // Only process if window dimensions actually changed
   if (currentWidth !== lastWidth || currentHeight !== lastHeight) {
-    updateScale()
     lastWidth = currentWidth
     lastHeight = currentHeight
+
+    // Debounce resize handling
+    if (resizeTimeout) {
+      clearTimeout(resizeTimeout)
+    }
+
+    resizeTimeout = setTimeout(() => {
+      console.log('Window resized to:', currentWidth, 'x', currentHeight)
+      updateScale()
+    }, 100)
   }
 }
+
+// Store observers and intervals outside onMounted
+let resizeObserver: ResizeObserver | null = null
+let playbackInterval: ReturnType<typeof setInterval> | null = null
 
 onMounted(async () => {
   connect()
 
-  // Initial scale calculation
-  updateScale()
-
-  // Ensure scale is applied after DOM is ready
+  // Wait for DOM to be fully ready
   await nextTick()
-  updateScale()
 
-  // Additional update after a short delay to ensure everything is rendered
-  setTimeout(() => updateScale(), 50)
+  console.log('Component mounted')
+
+  // Set up ResizeObserver to watch for content changes (not scale changes)
+  let lastObservedHeight = 0
+  if (remoteRef.value) {
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === remoteRef.value) {
+          // Get unscaled height by dividing observed height by current scale
+          const observedHeight = remoteRef.value!.scrollHeight
+          const unscaledHeight = Math.abs(scale.value - 1) < 0.01
+            ? observedHeight
+            : observedHeight / scale.value
+
+          // Only trigger if unscaled height changed significantly (more than 10px)
+          if (Math.abs(unscaledHeight - lastObservedHeight) > 10) {
+            console.log('Content height changed:', lastObservedHeight, '->', Math.round(unscaledHeight))
+            lastObservedHeight = unscaledHeight
+            updateNaturalHeight()
+          }
+        }
+      }
+    })
+    resizeObserver.observe(remoteRef.value)
+  }
+
+  // Initial measurement and scale calculation
+  // Wait for full render before first measurement
+  await nextTick()
+  await nextTick() // Extra tick for safety
+
+  // First measurement
+  updateNaturalHeight()
+
+  // Backup measurements to ensure we got the right height
+  requestAnimationFrame(() => {
+    updateNaturalHeight()
+  })
+
+  setTimeout(() => {
+    updateNaturalHeight()
+  }, 50)
+
+  setTimeout(() => {
+    updateNaturalHeight()
+  }, 200)
+
+  // Watch for playbackInfo changes which can affect height
+  // Only remeasure when playbackInfo appears or disappears (not on every update)
+  watch(() => playbackInfo.value?.title, (newTitle, oldTitle) => {
+    // Only remeasure if the presence of playbackInfo changed
+    const wasShown = !!oldTitle
+    const isShown = !!newTitle
+
+    if (wasShown !== isShown) {
+      console.log('playbackInfo visibility changed:', { wasShown, isShown })
+      nextTick(() => {
+        updateNaturalHeight()
+      })
+    }
+  })
 
   // Try to load device info from sessionStorage first (instant display)
   try {
@@ -244,24 +460,41 @@ onMounted(async () => {
     }
   })
 
-  const interval = setInterval(fetchPlaybackInfo, 5000)
+  playbackInterval = setInterval(fetchPlaybackInfo, 5000)
   fetchPlaybackInfo()
-
-  onUnmounted(() => {
-    clearInterval(interval)
-  })
 })
 
 onUnmounted(() => {
   disconnect()
   window.removeEventListener('keydown', handleKeyDown)
   window.removeEventListener('resize', handleResize)
+
+  // Clean up ResizeObserver
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+
+  // Clean up resize timeout
+  if (resizeTimeout) {
+    clearTimeout(resizeTimeout)
+    resizeTimeout = null
+  }
+
+  // Clean up playback interval
+  if (playbackInterval) {
+    clearInterval(playbackInterval)
+    playbackInterval = null
+  }
 })
 </script>
 
 <template>
   <div class="wrapper">
-    <div class="remote-wrapper" :style="{ width: `${380 * scale}px` }">
+    <div
+      ref="wrapperRef"
+      class="remote-wrapper"
+    >
       <div ref="remoteRef" class="remote-control w-[380px] px-6 pt-6 pb-12 flex flex-col bg-gradient-to-br from-[#e6e6e6] to-[#d0d0d0] rounded-[2rem]" :style="{ '--scale': scale }">
           <!-- Header -->
           <div class="mb-4">
@@ -338,45 +571,58 @@ onUnmounted(() => {
             </div>
 
             <!-- Touchpad -->
-            <div
-              class="w-60 h-60 max-sm:w-50 max-sm:h-50 bg-gradient-radial from-apple-gray-700 to-apple-gray-900 rounded-full flex items-center justify-center cursor-pointer select-none shadow-[inset_0_2px_8px_rgba(0,0,0,0.4),0_4px_12px_rgba(0,0,0,0.2)] transition-all hover:scale-[1.02] active:scale-[0.98] active:shadow-[inset_0_2px_12px_rgba(0,0,0,0.5),0_2px_8px_rgba(0,0,0,0.2)] my-4 relative"
-              @click="handleTouchpadClick"
-            >
-              <!-- Visual indicators for click zones -->
-              <div class="absolute inset-0 rounded-full pointer-events-none">
-                <!-- Center select area -->
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50%] h-[50%] rounded-full border border-white/5"></div>
+            <div class="touchpad-perspective">
+              <div
+                @click="handleTouchpadClick"
+                @mousedown="handleTouchpadPress"
+                @mouseup="clearPressedDirection"
+                @mouseleave="clearPressedDirection"
+                @touchstart="handleTouchpadPress"
+                @touchend="clearPressedDirection"
+                @touchcancel="clearPressedDirection"
+                class="touchpad w-60 h-60 max-sm:w-50 max-sm:h-50 bg-gradient-radial from-apple-gray-700 to-apple-gray-900 rounded-full flex items-center justify-center cursor-pointer select-none shadow-[inset_0_2px_8px_rgba(0,0,0,0.4),0_4px_12px_rgba(0,0,0,0.2)] my-4 relative"
+                :class="{
+                  'pressed-left': touchpadPressedDirection === 'pressed-left',
+                  'pressed-right': touchpadPressedDirection === 'pressed-right',
+                  'pressed-top': touchpadPressedDirection === 'pressed-top',
+                  'pressed-bottom': touchpadPressedDirection === 'pressed-bottom'
+                }"
+              >
+                <!-- Visual indicators for click zones -->
+                <div class="absolute inset-0 rounded-full pointer-events-none">
+                  <!-- Center select area -->
+                  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50%] h-[50%] rounded-full border border-white/5"></div>
 
-                <!-- Direction arrows -->
-                <!-- Up arrow -->
-                <div class="absolute top-[3%] left-1/2 -translate-x-1/2">
-                  <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M5 12l7-7 7 7"/>
-                  </svg>
-                </div>
+                  <!-- Direction arrows -->
+                  <!-- Up arrow -->
+                  <div class="absolute top-[3%] left-1/2 -translate-x-1/2">
+                    <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M5 12l7-7 7 7"/>
+                    </svg>
+                  </div>
 
-                <!-- Down arrow -->
-                <div class="absolute bottom-[3%] left-1/2 -translate-x-1/2">
-                  <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M19 12l-7 7-7-7"/>
-                  </svg>
-                </div>
+                  <!-- Down arrow -->
+                  <div class="absolute bottom-[3%] left-1/2 -translate-x-1/2">
+                    <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M19 12l-7 7-7-7"/>
+                    </svg>
+                  </div>
 
-                <!-- Left arrow -->
-                <div class="absolute left-[3%] top-1/2 -translate-y-1/2">
-                  <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M12 19l-7-7 7-7"/>
-                  </svg>
-                </div>
+                  <!-- Left arrow -->
+                  <div class="absolute left-[3%] top-1/2 -translate-y-1/2">
+                    <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M12 19l-7-7 7-7"/>
+                    </svg>
+                  </div>
 
-                <!-- Right arrow -->
-                <div class="absolute right-[3%] top-1/2 -translate-y-1/2">
-                  <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M12 5l7 7-7 7"/>
-                  </svg>
+                  <!-- Right arrow -->
+                  <div class="absolute right-[3%] top-1/2 -translate-y-1/2">
+                    <svg class="w-6 h-6 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M12 5l7 7-7 7"/>
+                    </svg>
+                  </div>
                 </div>
               </div>
-              <div class="w-[180px] h-[180px] max-sm:w-[150px] max-sm:h-[150px] border-2 border-white/8 rounded-full pointer-events-none"></div>
             </div>
 
             <!-- Back and TV Buttons -->
@@ -455,20 +701,62 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
-  padding: 1rem;
+  overflow: auto;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .remote-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: width 0.2s ease;
+  padding: 3rem 1rem 1rem 1rem;
+  box-sizing: border-box;
 }
 
 .remote-control {
-  transform: scale(var(--scale));
-  transform-origin: center center;
-  transition: transform 0.2s ease;
+  zoom: var(--scale);
+  transition: zoom 0.2s ease;
+  box-sizing: border-box;
+}
+
+/* Touchpad 3D animation */
+.touchpad-perspective {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 800px;
+}
+
+.touchpad {
+  transform-origin: 50% 50%;
+  transform: rotateX(0deg) rotateY(0deg);
+  transition:
+    transform 0.18s cubic-bezier(.25,.8,.25,1),
+    transform-origin 0.18s cubic-bezier(.25,.8,.25,1);
+}
+
+/* Click left -> axis right, left side inward */
+.touchpad.pressed-left {
+  transform-origin: 100% 50%;
+  transform: rotateY(-10deg) rotateX(0deg);
+}
+
+/* Click right -> axis left, right side inward */
+.touchpad.pressed-right {
+  transform-origin: 0% 50%;
+  transform: rotateY(10deg) rotateX(0deg);
+}
+
+/* Click top -> axis bottom, top side inward */
+.touchpad.pressed-top {
+  transform-origin: 50% 100%;
+  transform: rotateX(10deg) rotateY(0deg);
+}
+
+/* Click bottom -> axis top, bottom side inward */
+.touchpad.pressed-bottom {
+  transform-origin: 50% 0%;
+  transform: rotateX(-10deg) rotateY(0deg);
 }
 </style>

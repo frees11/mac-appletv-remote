@@ -313,38 +313,34 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-y-auto">
-    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 pb-20">
+  <div class="device-list-wrapper min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-y-auto">
+    <div class="device-list-content mx-auto max-w-7xl px-1.5 xs:px-3 sm:px-6 lg:px-8 pt-12 xs:pt-4 sm:pt-8 pb-8 xs:pb-12 sm:pb-20">
       <!-- Header -->
-      <div class="mb-8 text-center">
-        <h1 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">ATV Remote</h1>
-        <p class="mt-2 text-sm text-gray-400">Control your Apple TV devices</p>
+      <div class="mb-2 xs:mb-4 sm:mb-6 md:mb-8 text-center">
+        <h1 class="text-base xs:text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-white">ATV Remote</h1>
+        <p class="mt-0.5 xs:mt-1 sm:mt-2 text-[9px] xs:text-[10px] sm:text-xs md:text-sm text-gray-400">Control your Apple TV</p>
       </div>
 
       <!-- Error Message -->
-      <div v-if="error" class="mb-6 rounded-lg bg-red-900/20 border border-red-500/30 p-4">
-        <div class="flex items-start">
-          <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
-            </svg>
-          </div>
-          <div class="ml-3">
-            <p class="text-sm text-red-300">{{ error }}</p>
-          </div>
+      <div v-if="error" class="mb-2 xs:mb-3 sm:mb-6 rounded xs:rounded-md sm:rounded-lg bg-red-900/20 border border-red-500/30 p-1.5 xs:p-2.5 sm:p-4">
+        <div class="flex items-start gap-1.5 xs:gap-2">
+          <svg class="h-3.5 w-3.5 xs:h-4 xs:w-4 sm:h-5 sm:w-5 text-red-400 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+          </svg>
+          <p class="text-[10px] xs:text-[11px] sm:text-sm text-red-300">{{ error }}</p>
         </div>
       </div>
 
       <!-- Scan Button -->
-      <div class="mb-6 flex justify-center">
+      <div class="mb-2 xs:mb-3 sm:mb-6 flex justify-center">
         <button
           @click="scanDevices"
           :disabled="loading"
           type="button"
-          class="inline-flex items-center gap-2 rounded-lg bg-gray-800 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 border border-gray-700"
+          class="inline-flex items-center gap-1 xs:gap-1.5 sm:gap-2 rounded xs:rounded-md sm:rounded-lg bg-gray-800 px-2 xs:px-2.5 sm:px-4 py-1 xs:py-1.5 sm:py-2 text-[10px] xs:text-[11px] sm:text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 border border-gray-700"
         >
           <svg
-            class="h-4 w-4"
+            class="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-4 sm:w-4"
             :class="{ 'animate-spin': loading }"
             viewBox="0 0 24 24"
             fill="none"
@@ -353,89 +349,87 @@ onMounted(() => {
           >
             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
           </svg>
-          {{ loading ? 'Scanning...' : 'Scan for devices' }}
+          <span class="hidden xs:inline">{{ loading ? 'Scanning...' : 'Scan' }}</span>
+          <span class="xs:hidden">{{ loading ? '...' : 'Scan' }}</span>
         </button>
       </div>
 
       <!-- Empty State -->
-      <div v-if="!loading && appleTVDevices.length === 0" class="text-center py-12">
-        <div class="mx-auto h-20 w-20 rounded-2xl bg-gray-800 flex items-center justify-center mb-4">
-          <svg class="h-10 w-10 text-gray-600" viewBox="0 0 24 24" fill="currentColor">
+      <div v-if="!loading && appleTVDevices.length === 0" class="text-center py-4 xs:py-6 sm:py-12">
+        <div class="mx-auto h-10 w-10 xs:h-12 xs:w-12 sm:h-20 sm:w-20 rounded-lg xs:rounded-xl sm:rounded-2xl bg-gray-800 flex items-center justify-center mb-1.5 xs:mb-2 sm:mb-4">
+          <svg class="h-5 w-5 xs:h-6 xs:w-6 sm:h-10 sm:w-10 text-gray-600" viewBox="0 0 24 24" fill="currentColor">
             <path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/>
           </svg>
         </div>
-        <h3 class="text-xl font-semibold text-white mb-2">No Apple TVs Found</h3>
-        <p class="text-gray-400">Click "Scan for devices" to search for Apple TVs on your network</p>
+        <h3 class="text-sm xs:text-base sm:text-xl font-semibold text-white mb-0.5 xs:mb-1 sm:mb-2">No devices</h3>
+        <p class="text-[10px] xs:text-[11px] sm:text-base text-gray-400 px-2 xs:px-4">Click Scan</p>
       </div>
 
       <!-- Device Grid -->
-      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-1.5 xs:gap-2 sm:gap-4 md:gap-5 lg:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <div
           v-for="device in appleTVDevices"
           :key="device.identifier"
           @click="selectDevice(device, $event)"
-          class="group relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 p-6 border border-gray-700 hover:border-purple-500/50 cursor-pointer shadow-[0_10px_15px_-3px_rgb(0_0_0/0.1),0_4px_6px_-4px_rgb(0_0_0/0.1)] hover:shadow-[0_20px_25px_-5px_rgba(168,85,247,0.4),0_8px_10px_-6px_rgba(168,85,247,0.2)] transition-all duration-300 ease-out"
+          class="group relative overflow-hidden rounded xs:rounded-md sm:rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 p-2 xs:p-3 sm:p-5 md:p-6 border border-gray-700 hover:border-purple-500/50 cursor-pointer shadow-[0_10px_15px_-3px_rgb(0_0_0/0.1),0_4px_6px_-4px_rgb(0_0_0/0.1)] hover:shadow-[0_20px_25px_-5px_rgba(168,85,247,0.4),0_8px_10px_-6px_rgba(168,85,247,0.2)] transition-all duration-300 ease-out"
         >
           <!-- Glow Effect -->
           <div class="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-purple-600/0 group-hover:from-purple-500/10 group-hover:to-purple-600/10 transition-all duration-300 ease-out"></div>
 
           <div class="relative">
             <!-- Header -->
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/20">
-                <svg class="h-6 w-6 text-purple-400" viewBox="0 0 24 24" fill="currentColor">
+            <div class="flex items-start justify-between mb-1.5 xs:mb-2 sm:mb-4 gap-1">
+              <div class="flex h-6 w-6 xs:h-8 xs:w-8 sm:h-12 sm:w-12 items-center justify-center rounded xs:rounded-md sm:rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex-shrink-0">
+                <svg class="h-3 w-3 xs:h-4 xs:w-4 sm:h-6 sm:w-6 text-purple-400" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/>
                 </svg>
               </div>
               <span
                 v-if="device.paired"
-                class="inline-flex items-center gap-1.5 rounded-full bg-green-500/20 px-3 py-1 text-xs font-semibold text-green-400 border border-green-500/30"
+                class="inline-flex items-center gap-0.5 xs:gap-1 sm:gap-1.5 rounded-full bg-green-500/20 px-1 xs:px-1.5 sm:px-3 py-0.5 text-[8px] xs:text-[9px] sm:text-xs font-semibold text-green-400 border border-green-500/30 flex-shrink-0"
               >
-                <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
-                </svg>
-                Paired
+                <span>✓</span>
               </span>
               <span
                 v-else
-                class="inline-flex items-center rounded-full bg-orange-500/20 px-3 py-1 text-xs font-semibold text-orange-400 border border-orange-500/30"
+                class="inline-flex items-center rounded-full bg-orange-500/20 px-1 xs:px-1.5 sm:px-3 py-0.5 text-[8px] xs:text-[9px] sm:text-xs font-semibold text-orange-400 border border-orange-500/30 flex-shrink-0"
               >
-                Not Paired
+                <span>⚠</span>
               </span>
             </div>
 
             <!-- Device Info -->
-            <div class="mb-4">
-              <h3 class="text-lg font-semibold text-white mb-1 group-hover:text-purple-300 transition-colors">
+            <div class="mb-1.5 xs:mb-2 sm:mb-4">
+              <h3 class="text-xs xs:text-sm sm:text-lg font-semibold text-white mb-0.5 group-hover:text-purple-300 transition-colors line-clamp-1">
                 {{ device.name }}
               </h3>
-              <p class="text-sm text-gray-400 font-mono mb-1">{{ device.address }}</p>
-              <p v-if="device.model" class="text-xs text-gray-500">{{ device.model }}</p>
+              <p class="text-[9px] xs:text-[10px] sm:text-sm text-gray-400 font-mono mb-0.5 break-all line-clamp-1">{{ device.address }}</p>
+              <p v-if="device.model" class="text-[8px] xs:text-[9px] sm:text-xs text-gray-500 line-clamp-1">{{ device.model }}</p>
             </div>
 
             <!-- Pair/Unpair Button -->
-            <div class="pt-4 border-t border-gray-700">
+            <div class="pt-1.5 xs:pt-2 sm:pt-4 border-t border-gray-700">
               <button
                 v-if="!device.paired"
                 @click="pairDevice(device, $event)"
                 type="button"
-                class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-purple-500 transition-colors duration-200 shadow-lg shadow-purple-600/30"
+                class="w-full inline-flex items-center justify-center gap-0.5 xs:gap-1 sm:gap-2 rounded xs:rounded-md sm:rounded-lg bg-purple-600 px-1.5 xs:px-2 sm:px-4 py-1 xs:py-1.5 sm:py-2.5 text-[10px] xs:text-[11px] sm:text-sm font-semibold text-white hover:bg-purple-500 transition-colors duration-200 shadow-lg shadow-purple-600/30"
               >
-                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <svg class="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd" />
                 </svg>
-                Pair Device
+                <span>Pair</span>
               </button>
               <button
                 v-else
                 @click="unpairDevice(device, $event)"
                 type="button"
-                class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500 transition-colors duration-200 shadow-lg shadow-red-600/30"
+                class="w-full inline-flex items-center justify-center gap-0.5 xs:gap-1 sm:gap-2 rounded xs:rounded-md sm:rounded-lg bg-red-600 px-1.5 xs:px-2 sm:px-4 py-1 xs:py-1.5 sm:py-2.5 text-[10px] xs:text-[11px] sm:text-sm font-semibold text-white hover:bg-red-500 transition-colors duration-200 shadow-lg shadow-red-600/30"
               >
-                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <svg class="h-2.5 w-2.5 xs:h-3 xs:w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                 </svg>
-                Unpair Device
+                <span>Unpair</span>
               </button>
             </div>
           </div>
@@ -459,17 +453,17 @@ onMounted(() => {
         <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
           <div class="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"></div>
 
-          <div class="relative transform overflow-hidden rounded-2xl bg-gray-900 border border-gray-700 px-4 pb-4 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-8">
+          <div class="relative transform overflow-hidden rounded-lg xs:rounded-xl sm:rounded-2xl bg-gray-900 border border-gray-700 px-3 xs:px-4 pb-3 xs:pb-4 pt-4 xs:pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-8">
             <!-- Loading Spinner -->
-            <div class="flex flex-col items-center justify-center py-8">
-              <div class="mb-6">
-                <svg class="animate-spin h-16 w-16 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div class="flex flex-col items-center justify-center py-4 xs:py-6 sm:py-8">
+              <div class="mb-3 xs:mb-4 sm:mb-6">
+                <svg class="animate-spin h-10 w-10 xs:h-12 xs:w-12 sm:h-16 sm:w-16 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               </div>
-              <h3 class="text-lg font-semibold text-white mb-2">Initiating Pairing</h3>
-              <p class="text-sm text-gray-400 text-center">Waiting for Apple TV to respond...</p>
+              <h3 class="text-sm xs:text-base sm:text-lg font-semibold text-white mb-1 xs:mb-1.5 sm:mb-2">Pairing</h3>
+              <p class="text-[10px] xs:text-xs sm:text-sm text-gray-400 text-center px-2">Waiting...</p>
             </div>
           </div>
         </div>
@@ -501,37 +495,37 @@ onMounted(() => {
             leave-from-class="opacity-100 translate-y-0 sm:scale-100"
             leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <div class="relative transform overflow-hidden rounded-2xl bg-gray-900 border border-gray-700 px-4 pb-4 pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-8">
+            <div class="relative transform overflow-hidden rounded-lg xs:rounded-xl sm:rounded-2xl bg-gray-900 border border-gray-700 px-3 xs:px-4 sm:px-6 pb-3 xs:pb-4 sm:pb-6 pt-4 xs:pt-5 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg md:p-8">
               <!-- Icon -->
-              <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 mb-6">
-                <svg class="h-10 w-10 text-purple-400" viewBox="0 0 20 20" fill="currentColor">
+              <div class="mx-auto flex h-12 w-12 xs:h-16 xs:w-16 sm:h-20 sm:w-20 items-center justify-center rounded-lg xs:rounded-xl sm:rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 mb-3 xs:mb-4 sm:mb-6">
+                <svg class="h-6 w-6 xs:h-8 xs:w-8 sm:h-10 sm:w-10 text-purple-400" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd" />
                 </svg>
               </div>
 
               <!-- Title -->
-              <div class="text-center mb-8">
-                <h3 class="text-2xl font-bold text-white mb-2">
-                  {{ timeExpired ? 'Session Expired' : 'Enter PIN from Apple TV' }}
+              <div class="text-center mb-4 xs:mb-5 sm:mb-6 md:mb-8">
+                <h3 class="text-base xs:text-xl sm:text-2xl font-bold text-white mb-1 xs:mb-1.5 sm:mb-2">
+                  {{ timeExpired ? 'Expired' : 'Enter PIN' }}
                 </h3>
-                <p v-if="!timeExpired" class="text-sm text-gray-400">Look at your Apple TV screen and enter the 4-digit PIN</p>
-                <p v-if="!timeExpired" class="text-xs text-yellow-500 mt-2">⏱ Session expires in 37 seconds</p>
-                <p v-if="timeExpired" class="text-sm text-red-400">The pairing session has expired. Please request a new PIN.</p>
+                <p v-if="!timeExpired" class="text-[10px] xs:text-xs sm:text-sm text-gray-400 px-2">Enter 4-digit PIN from TV</p>
+                <p v-if="!timeExpired" class="text-[9px] xs:text-[10px] sm:text-xs text-yellow-500 mt-1 xs:mt-1.5 sm:mt-2">⏱ 37s</p>
+                <p v-if="timeExpired" class="text-[10px] xs:text-xs sm:text-sm text-red-400 px-2">Session expired</p>
               </div>
 
               <!-- PIN Input -->
-              <div class="mb-8">
-                <div class="flex gap-3 justify-center" @click="!timeExpired && $refs.pinInput?.focus()">
+              <div class="mb-3 xs:mb-4 sm:mb-6 md:mb-8">
+                <div class="flex gap-1 xs:gap-1.5 sm:gap-2 md:gap-3 justify-center" @click="!timeExpired && $refs.pinInput?.focus()">
                   <div
                     v-for="i in 4"
                     :key="i"
-                    class="relative w-16 h-20 rounded-xl border-2 bg-gray-800 flex items-center justify-center transition-all"
+                    class="relative w-9 h-12 xs:w-10 xs:h-14 sm:w-12 sm:h-16 md:w-16 md:h-20 rounded xs:rounded-md sm:rounded-lg border-2 bg-gray-800 flex items-center justify-center transition-all"
                     :class="[
                       timeExpired ? 'border-gray-700 opacity-50 cursor-not-allowed' : 'border-gray-700 cursor-text',
                       !timeExpired && pairingPin.length >= i ? 'border-purple-500 ring-2 ring-purple-500/20' : ''
                     ]"
                   >
-                    <span class="text-3xl font-bold text-white pointer-events-none font-mono tabular-nums">
+                    <span class="text-lg xs:text-xl sm:text-2xl md:text-3xl font-bold text-white pointer-events-none font-mono tabular-nums">
                       {{ pairingPin[i - 1] || '•' }}
                     </span>
                   </div>
@@ -551,11 +545,11 @@ onMounted(() => {
               </div>
 
               <!-- Actions -->
-              <div v-if="!timeExpired" class="flex gap-3">
+              <div v-if="!timeExpired" class="flex gap-1.5 xs:gap-2 sm:gap-3">
                 <button
                   @click="cancelPairing"
                   type="button"
-                  class="flex-1 rounded-lg bg-gray-800 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700 border border-gray-700 transition-colors"
+                  class="flex-1 rounded xs:rounded-md sm:rounded-lg bg-gray-800 px-2 xs:px-3 sm:px-4 py-2 xs:py-2.5 sm:py-3 text-[10px] xs:text-xs sm:text-sm font-semibold text-white hover:bg-gray-700 border border-gray-700 transition-colors"
                 >
                   Cancel
                 </button>
@@ -563,27 +557,27 @@ onMounted(() => {
                   @click="submitPairing"
                   type="button"
                   :disabled="pairingPin.length !== 4"
-                  class="flex-1 rounded-lg bg-purple-600 px-4 py-3 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-600/30 transition-all"
+                  class="flex-1 rounded xs:rounded-md sm:rounded-lg bg-purple-600 px-2 xs:px-3 sm:px-4 py-2 xs:py-2.5 sm:py-3 text-[10px] xs:text-xs sm:text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-600/30 transition-all"
                 >
-                  Submit PIN
+                  Submit
                 </button>
               </div>
 
               <!-- Expired Actions -->
-              <div v-else class="flex gap-3">
+              <div v-else class="flex gap-1.5 xs:gap-2 sm:gap-3">
                 <button
                   @click="cancelPairing"
                   type="button"
-                  class="flex-1 rounded-lg bg-gray-800 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-700 border border-gray-700 transition-colors"
+                  class="flex-1 rounded xs:rounded-md sm:rounded-lg bg-gray-800 px-2 xs:px-3 sm:px-4 py-2 xs:py-2.5 sm:py-3 text-[10px] xs:text-xs sm:text-sm font-semibold text-white hover:bg-gray-700 border border-gray-700 transition-colors"
                 >
                   Close
                 </button>
                 <button
                   @click="resendRequest"
                   type="button"
-                  class="flex-1 rounded-lg bg-purple-600 px-4 py-3 text-sm font-semibold text-white hover:bg-purple-500 shadow-lg shadow-purple-600/30 transition-all"
+                  class="flex-1 rounded xs:rounded-md sm:rounded-lg bg-purple-600 px-2 xs:px-3 sm:px-4 py-2 xs:py-2.5 sm:py-3 text-[10px] xs:text-xs sm:text-sm font-semibold text-white hover:bg-purple-500 shadow-lg shadow-purple-600/30 transition-all"
                 >
-                  Resend Request
+                  Resend
                 </button>
               </div>
             </div>

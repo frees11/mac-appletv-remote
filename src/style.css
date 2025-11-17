@@ -19,13 +19,14 @@
 
 body {
   margin: 0;
-  min-width: 320px;
+  min-width: 200px;
   min-height: 100vh;
   -webkit-user-select: none;
   user-select: none;
   cursor: default;
   -webkit-app-region: drag;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #app {
@@ -35,7 +36,8 @@ body {
   -webkit-user-select: none;
   user-select: none;
   -webkit-app-region: no-drag;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* Hide scrollbars but allow scrolling */
