@@ -40,25 +40,6 @@ async def pair_for_screenshots(device_id: str):
     return result
 
 
-@router.post("/{device_id}/start-tunnel")
-async def start_tunnel(device_id: str):
-    if not await screenshot_service.check_pymobiledevice3_available():
-        raise HTTPException(
-            status_code=503,
-            detail="pymobiledevice3 is not installed"
-        )
-
-    success = await screenshot_service.start_tunnel_daemon()
-
-    if not success:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to start tunnel daemon. Make sure you have sudo access."
-        )
-
-    return {"success": True, "message": "Tunnel daemon started"}
-
-
 @router.get("/{device_id}/capture", response_model=ScreenshotResponse)
 async def capture_screenshot(device_id: str, quality: int = 85):
     if not await screenshot_service.check_pymobiledevice3_available():

@@ -376,9 +376,9 @@ onMounted(() => {
           <!-- Glow Effect -->
           <div class="absolute inset-0 bg-gradient-to-br from-purple-500/0 to-purple-600/0 group-hover:from-purple-500/5 group-hover:to-purple-600/5 transition-all duration-300 ease-out"></div>
 
-          <div class="relative">
+          <div class="relative flex flex-col h-full">
             <!-- Header -->
-            <div class="flex items-start justify-between mb-1.5 xs:mb-2 sm:mb-4 gap-1">
+            <div class="flex items-start justify-between mb-3 xs:mb-3 sm:mb-4 gap-1">
               <div class="flex h-6 w-6 xs:h-8 xs:w-8 sm:h-12 sm:w-12 items-center justify-center rounded xs:rounded-md sm:rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex-shrink-0">
                 <svg class="h-3 w-3 xs:h-4 xs:w-4 sm:h-6 sm:w-6 text-purple-400" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/>
@@ -401,16 +401,16 @@ onMounted(() => {
             </div>
 
             <!-- Device Info -->
-            <div class="mb-1.5 xs:mb-2 sm:mb-4">
-              <h3 class="text-sm xs:text-base sm:text-lg font-semibold text-white mb-0.5 group-hover:text-purple-300 transition-colors duration-300 ease-out line-clamp-1">
+            <div class="flex-1 mb-3 xs:mb-3 sm:mb-4">
+              <h3 class="text-lg xs:text-xl sm:text-2xl font-semibold text-white mb-1 xs:mb-1.5 sm:mb-2 group-hover:text-purple-300 transition-colors duration-300 ease-out line-clamp-1">
                 {{ device.name }}
               </h3>
-              <p class="text-[11px] xs:text-xs sm:text-sm text-gray-400 font-mono mb-0.5 break-all line-clamp-1">{{ device.address }}</p>
-              <p v-if="device.model" class="text-[10px] xs:text-xs sm:text-xs text-gray-500 line-clamp-1">{{ device.model }}</p>
+              <p class="text-sm xs:text-base sm:text-base text-gray-300 font-mono mb-0.5 xs:mb-1 break-all line-clamp-1">{{ device.address }}</p>
+              <p v-if="device.model" class="text-xs xs:text-xs sm:text-sm text-gray-500 line-clamp-1">{{ device.model }}</p>
             </div>
 
             <!-- Pair/Unpair Button -->
-            <div class="pt-1.5 xs:pt-2 sm:pt-4 border-t border-gray-700">
+            <div class="flex justify-end">
               <button
                 v-if="!device.paired"
                 @click="pairDevice(device, $event)"
@@ -426,9 +426,9 @@ onMounted(() => {
                 v-else
                 @click="unpairDevice(device, $event)"
                 type="button"
-                class="w-full inline-flex items-center justify-center gap-1 text-xs text-red-500/70 hover:text-red-500 transition-colors duration-200"
+                class="inline-flex items-center justify-center gap-1 text-xs sm:text-sm text-red-500/70 hover:text-red-500 transition-colors duration-200"
               >
-                <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                <svg class="h-3 w-3 sm:h-4 sm:w-4" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                 </svg>
                 <span>Unpair</span>

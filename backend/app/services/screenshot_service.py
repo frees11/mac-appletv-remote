@@ -12,7 +12,6 @@ from PIL import Image
 class ScreenshotService:
 
     def __init__(self):
-        self.tunnel_process: Optional[subprocess.Popen] = None
         self.paired_devices: Dict[str, bool] = {}
         self.streaming_tasks: Dict[str, asyncio.Task] = {}
         self.screenshot_cache: Dict[str, str] = {}
@@ -66,36 +65,6 @@ class ScreenshotService:
                 "success": False,
                 "error": str(e)
             }
-
-    async def start_tunnel_daemon(self) -> bool:
-        if self.tunnel_process and self.tunnel_process.poll() is None:
-            print("ℹ️  Tunnel daemon already running")
-            return True
-
-        try:
-            print("🚀 Starting RSD tunnel daemon...")
-
-            # Try without sudo first (may work if permissions are set up)
-            self.tunnel_process = subprocess.Popen(
-                ["python3", "-m", "pymobiledevice3", "remote", "tunneld"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-
-            await asyncio.sleep(3)
-
-            if self.tunnel_process.poll() is None:
-                print("✅ Tunnel daemon started successfully")
-                return True
-            else:
-                stderr_output = self.tunnel_process.stderr.read() if self.tunnel_process.stderr else ""
-                print(f"❌ Tunnel daemon failed to start: {stderr_output}")
-                return False
-
-        except Exception as e:
-            print(f"❌ Failed to start tunnel daemon: {e}")
-            return False
 
     async def capture_screenshot(self, device_id: str, quality: int = 85) -> Optional[str]:
         try:
@@ -209,14 +178,6 @@ class ScreenshotService:
     async def cleanup(self):
         for device_id in list(self.streaming_tasks.keys()):
             self.stop_streaming(device_id)
-
-        if self.tunnel_process and self.tunnel_process.poll() is None:
-            print("🛑 Stopping tunnel daemon...")
-            self.tunnel_process.terminate()
-            try:
-                self.tunnel_process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self.tunnel_process.kill()
 
 
 screenshot_service = ScreenshotService()
