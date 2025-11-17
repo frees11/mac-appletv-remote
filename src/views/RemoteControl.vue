@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useWebSocket } from '@/composables/useWebSocket'
 import { useApi } from '@/composables/useApi'
@@ -39,6 +39,8 @@ const isElectron = ref(typeof window !== 'undefined' && (window as any).electron
 const remoteRef = ref<HTMLElement | null>(null)
 const wrapperRef = ref<HTMLElement | null>(null)
 const touchpadPressedDirection = ref<string | null>(null)
+const touchpadPressStart = ref<number | null>(null)
+const touchpadPressPosition = ref<{ x: number, y: number, direction: string } | null>(null)
 
 // Store unscaled natural height
 const naturalHeight = ref(0)
@@ -46,7 +48,7 @@ const naturalHeight = ref(0)
 // Calculate scale based on window dimensions
 const calculateScale = () => {
   const horizontalPadding = 16 * 2 // 1rem on each side = 32px total
-  const topPadding = 48 // 3rem top padding
+  const topPadding = 12 // 0.75rem top padding
   const bottomPadding = 0 // No bottom padding
   const topMargin = 60 // Further reduced top margin
   const safetyMargin = 2 // Almost no safety margin
@@ -83,6 +85,19 @@ const calculateScale = () => {
 
 // Initialize with a safe default scale
 const scale = ref(0.7)
+
+// Calculate dynamic offset based on top spacing (min 10rem)
+const verticalOffset = computed(() => {
+  const topPadding = 12 // 0.75rem wrapper padding-top
+  const topMargin = 60 // topMargin from calculateScale
+  const safetyMargin = 2 // safetyMargin from calculateScale
+
+  // Convert to rem (16px = 1rem)
+  const totalTopRem = (topPadding + topMargin + safetyMargin) / 16
+
+  // Minimum 10rem
+  return Math.max(10, totalTopRem)
+})
 
 const updateNaturalHeight = () => {
   if (!wrapperRef.value || !remoteRef.value) return
@@ -407,6 +422,29 @@ const handleVolumeDownEnd = (e: MouseEvent | TouchEvent) => {
   }
 }
 
+// Helper function to calculate direction from position
+const calculateDirection = (x: number, y: number, rect: DOMRect): string => {
+  const cx = rect.width / 2
+  const cy = rect.height / 2
+  const dx = x - cx
+  const dy = y - cy
+
+  // Check if click is in center area
+  const distance = Math.sqrt(dx * dx + dy * dy)
+  const radius = Math.min(rect.width, rect.height) / 2
+
+  if (distance < radius * 0.5) {
+    return 'center'
+  } else {
+    // Determine direction based on which offset is greater
+    if (Math.abs(dx) > Math.abs(dy)) {
+      return dx < 0 ? 'left' : 'right'
+    } else {
+      return dy < 0 ? 'up' : 'down'
+    }
+  }
+}
+
 const setPressedDirection = (e: MouseEvent | TouchEvent) => {
   const target = e.currentTarget as HTMLElement
   const rect = target.getBoundingClientRect()
@@ -426,19 +464,27 @@ const setPressedDirection = (e: MouseEvent | TouchEvent) => {
 
   const x = clientX - rect.left
   const y = clientY - rect.top
-  const cx = rect.width / 2
-  const cy = rect.height / 2
-  const dx = x - cx
-  const dy = y - cy
 
-  // Determine direction based on which offset is greater
-  if (Math.abs(dx) > Math.abs(dy)) {
-    touchpadPressedDirection.value = dx < 0 ? 'pressed-left' : 'pressed-right'
-  } else {
-    touchpadPressedDirection.value = dy < 0 ? 'pressed-top' : 'pressed-bottom'
+  // Calculate direction
+  const direction = calculateDirection(x, y, rect)
+
+  // Store position and direction for long press
+  touchpadPressPosition.value = { x, y, direction }
+
+  // Set visual pressed state
+  if (direction === 'center') {
+    touchpadPressedDirection.value = 'pressed-center'
+  } else if (direction === 'left') {
+    touchpadPressedDirection.value = 'pressed-left'
+  } else if (direction === 'right') {
+    touchpadPressedDirection.value = 'pressed-right'
+  } else if (direction === 'up') {
+    touchpadPressedDirection.value = 'pressed-top'
+  } else if (direction === 'down') {
+    touchpadPressedDirection.value = 'pressed-bottom'
   }
 
-  console.log('Pressed direction:', touchpadPressedDirection.value, { dx, dy, x, y, cx, cy })
+  console.log('Pressed direction:', touchpadPressedDirection.value, direction, { x, y })
 }
 
 const clearPressedDirection = () => {
@@ -451,6 +497,9 @@ let animationClearTimeout: ReturnType<typeof setTimeout> | null = null
 const handleTouchpadPress = (e: MouseEvent | TouchEvent) => {
   if (e instanceof MouseEvent && e.button !== 0) return // Only left mouse button
 
+  // Record press start time for long press detection
+  touchpadPressStart.value = Date.now()
+
   setPressedDirection(e)
 
   // Clear any existing timeout
@@ -458,13 +507,54 @@ const handleTouchpadPress = (e: MouseEvent | TouchEvent) => {
     clearTimeout(animationClearTimeout)
   }
 
-  // Auto-clear animation after 200ms
+  // Auto-clear animation after 700ms (to cover 600ms long press threshold)
   animationClearTimeout = setTimeout(() => {
     clearPressedDirection()
-  }, 200)
+  }, 700)
+}
+
+const handleTouchpadRelease = () => {
+  if (!touchpadPressStart.value || !touchpadPressPosition.value) {
+    clearPressedDirection()
+    return
+  }
+
+  const pressDuration = Date.now() - touchpadPressStart.value
+  const isLongPress = pressDuration >= LONG_PRESS_DURATION
+
+  console.log('Touchpad release:', { pressDuration, isLongPress, direction: touchpadPressPosition.value.direction })
+
+  // Send long press command
+  if (isLongPress) {
+    const direction = touchpadPressPosition.value.direction
+
+    if (direction === 'center') {
+      sendCommand('long_select')
+    } else if (direction === 'up') {
+      sendCommand('long_up')
+    } else if (direction === 'down') {
+      sendCommand('long_down')
+    } else if (direction === 'left') {
+      sendCommand('long_left')
+    } else if (direction === 'right') {
+      sendCommand('long_right')
+    }
+  }
+  // Short press handled by handleTouchpadClick
+
+  // Reset
+  touchpadPressStart.value = null
+  touchpadPressPosition.value = null
+  clearPressedDirection()
 }
 
 const handleTouchpadClick = (e: MouseEvent) => {
+  // Skip if long press was already handled
+  if (touchpadPressStart.value && Date.now() - touchpadPressStart.value >= LONG_PRESS_DURATION) {
+    console.log('Skipping click - long press already handled')
+    return
+  }
+
   const target = e.currentTarget as HTMLElement
   const rect = target.getBoundingClientRect()
 
@@ -731,17 +821,17 @@ onUnmounted(() => {
       ref="wrapperRef"
       class="remote-wrapper"
     >
-      <div ref="remoteRef" class="remote-control w-[380px] px-6 pt-6 pb-12 flex flex-col bg-gradient-to-br from-[#e6e6e6] to-[#d0d0d0] rounded-[2rem]" :style="{ '--scale': scale }">
+      <div ref="remoteRef" class="remote-control w-[380px] p-6 flex flex-col bg-gradient-to-br from-[#e6e6e6] to-[#d0d0d0] rounded-[2rem]" :style="{ '--scale': scale, '--vertical-offset': `${verticalOffset}rem` }">
           <!-- Header -->
           <div class="mb-4">
             <div class="flex justify-between items-center mb-2">
               <button
                 @click="goBack"
-                class="px-4 py-2 bg-black/8 rounded-lg text-[#1d1d1f] text-sm font-medium transition-colors hover:bg-black/12 flex items-center justify-center cursor-pointer select-none"
+                class="pb-2 bg-black/8 rounded-lg text-[#1d1d1f] text-sm font-medium transition-colors hover:bg-black/12 flex items-center justify-center cursor-pointer select-none"
               >
                 ← Back
               </button>
-              <div class="flex items-center gap-2 text-apple-gray-400 text-xs font-medium">
+              <div class="flex items-center gap-2 text-apple-gray-400 text-xs font-medium self-start">
                 <div
                   :class="[
                     'w-1.5 h-1.5 rounded-full transition-colors',
@@ -828,17 +918,18 @@ onUnmounted(() => {
               <div
                 @click="handleTouchpadClick"
                 @mousedown="handleTouchpadPress"
-                @mouseup="clearPressedDirection"
-                @mouseleave="clearPressedDirection"
+                @mouseup="handleTouchpadRelease"
+                @mouseleave="handleTouchpadRelease"
                 @touchstart="handleTouchpadPress"
-                @touchend="clearPressedDirection"
-                @touchcancel="clearPressedDirection"
+                @touchend="handleTouchpadRelease"
+                @touchcancel="handleTouchpadRelease"
                 class="touchpad w-60 h-60 max-sm:w-50 max-sm:h-50 bg-gradient-radial from-apple-gray-700 to-apple-gray-900 rounded-full flex items-center justify-center cursor-pointer select-none shadow-[inset_0_2px_8px_rgba(0,0,0,0.4),0_4px_12px_rgba(0,0,0,0.2)] my-4 relative"
                 :class="{
                   'pressed-left': touchpadPressedDirection === 'pressed-left',
                   'pressed-right': touchpadPressedDirection === 'pressed-right',
                   'pressed-top': touchpadPressedDirection === 'pressed-top',
-                  'pressed-bottom': touchpadPressedDirection === 'pressed-bottom'
+                  'pressed-bottom': touchpadPressedDirection === 'pressed-bottom',
+                  'pressed-center': touchpadPressedDirection === 'pressed-center'
                 }"
               >
                 <!-- Visual indicators for click zones -->
@@ -1040,7 +1131,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: auto;
+  overflow: hidden;
   padding: 0;
   box-sizing: border-box;
 }
@@ -1049,7 +1140,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 3rem 1rem 1rem 1rem;
+  padding: 0.75rem 1rem 1rem 1rem;
   box-sizing: border-box;
 }
 
@@ -1057,6 +1148,14 @@ onUnmounted(() => {
   zoom: var(--scale);
   transition: zoom 0.2s ease;
   box-sizing: border-box;
+}
+
+/* Apply negative margin only for tall windows where remote is large */
+@media (min-height: 600px) {
+  .remote-control {
+    margin-bottom: calc(-1 * var(--vertical-offset, 10rem));
+    padding-bottom: var(--vertical-offset, 10rem);
+  }
 }
 
 /* Touchpad 3D animation */
@@ -1079,7 +1178,8 @@ onUnmounted(() => {
 .touchpad.pressed-left,
 .touchpad.pressed-right,
 .touchpad.pressed-top,
-.touchpad.pressed-bottom {
+.touchpad.pressed-bottom,
+.touchpad.pressed-center {
   transition: none;
 }
 
@@ -1105,5 +1205,11 @@ onUnmounted(() => {
 .touchpad.pressed-bottom {
   transform-origin: 50% 0%;
   transform: rotateX(-10deg) rotateY(0deg);
+}
+
+/* Click center -> press entire touchpad */
+.touchpad.pressed-center {
+  transform-origin: 50% 50%;
+  transform: scale(0.95);
 }
 </style>

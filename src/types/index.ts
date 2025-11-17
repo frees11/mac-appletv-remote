@@ -22,7 +22,9 @@ export interface PlaybackInfo {
 
 export type RemoteAction =
   | 'up' | 'down' | 'left' | 'right'
-  | 'select' | 'menu' | 'home'
+  | 'long_up' | 'long_down' | 'long_left' | 'long_right'
+  | 'select' | 'long_select'
+  | 'menu' | 'home'
   | 'play' | 'pause' | 'play_pause' | 'stop'
   | 'next' | 'previous'
   | 'volume_up' | 'volume_down' | 'mute'

@@ -245,7 +245,7 @@ function createWindow() {
     : path.join(process.resourcesPath, 'icon.png')
 
   mainWindow = new BrowserWindow({
-    width: 500,
+    width: 400,
     height: 800,
     minWidth: 200, // umožní zmenšit na třetinu
     minHeight: 300, // umožní zmenšit na třetinu
