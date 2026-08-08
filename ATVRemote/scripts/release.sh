@@ -133,8 +133,14 @@ xcodebuild -exportArchive \
 	|| { grep -E "error:|EXPORT FAILED" "$LOG_DIR/export.log" | tail -30 >&2 || true
 	     fail "export failed — full log: $LOG_DIR/export.log"; }
 
-echo "  ok  $EXPORT_PATH"
-ls -1 "$EXPORT_PATH"
+# ExportOptions.plist sets destination=upload, so xcodebuild hands the package
+# straight to App Store Connect and leaves -exportPath empty.
+if [ ${#AUTH_ARGS[@]} -gt 0 ]; then
+	echo "  ok  uploaded to App Store Connect"
+else
+	echo "  ok  $EXPORT_PATH"
+	ls -1 "$EXPORT_PATH"
+fi
 
 echo ""
 echo "=== Release $VERSION (build $BUILD) complete ==="
