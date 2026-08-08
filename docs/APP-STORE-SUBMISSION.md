@@ -151,13 +151,13 @@ Paste something close to this. The first paragraph is the one that matters.
 > device list, pairing, remote control, touchpad and now playing. A yellow banner
 > marks it, and **Exit** in that banner returns to live mode.
 >
-> **Local network entitlement**
+> **Local network access**
 >
-> The app declares `com.apple.security.temporary-exception.bonjour-browse` for
-> `_mediaremotetv._tcp`, `_companion-link._tcp` and `_airplay._tcp`. These are the
-> Bonjour services Apple TV publishes; browsing them is the only way to find a
-> device to control. No other network access is made — there is no backend and no
-> analytics.
+> The app browses `_mediaremotetv._tcp`, `_companion-link._tcp` and
+> `_airplay._tcp` — the Bonjour services Apple TV publishes; browsing them is the
+> only way to find a device to control. The service types are declared in
+> `NSBonjourServices` and the purpose in `NSLocalNetworkUsageDescription`. No
+> other network access is made — there is no backend and no analytics.
 >
 > **Subscription**
 >

@@ -8,11 +8,5 @@
 	<true/>
 	<key>com.apple.security.network.server</key>
 	<true/>
-	<key>com.apple.security.temporary-exception.bonjour-browse</key>
-	<array>
-		<string>_companion-link._tcp</string>
-		<string>_mediaremotetv._tcp</string>
-		<string>_airplay._tcp</string>
-	</array>
 </dict>
 </plist>
