@@ -50,11 +50,16 @@ public final class ServiceFactory {
         return ConnectionService(credentialsManager: credentialsManager as! CredentialsManager)
     }
 
+    /// `-mockSubscribed` works on its own, so the real discovery and connection
+    /// services can be exercised without a live subscription blocking the way.
     public func createSubscriptionService() -> any SubscriptionServiceProtocol {
-        if useMocks {
-            return MockSubscriptionService(status: config.mockSubscribed ? .subscribed(productID: SubscriptionProductID.yearly, expirationDate: MockData.subscriptionExpiration) : .notSubscribed)
+        guard useMocks || config.mockSubscribed else {
+            return SubscriptionService()
         }
-        return SubscriptionService()
+        let status: SubscriptionStatus = config.mockSubscribed
+            ? .subscribed(productID: SubscriptionProductID.yearly, expirationDate: MockData.subscriptionExpiration)
+            : .notSubscribed
+        return MockSubscriptionService(status: status)
     }
 
     public func createPairingService() -> any PairingServiceProtocol {
