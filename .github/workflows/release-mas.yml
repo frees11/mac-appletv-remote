@@ -87,7 +87,22 @@ jobs:
           # Without this codesign blocks on an interactive keychain prompt.
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
+          # The Resources build phase bundles the profile from this path.
           echo "$MAS_PROVISIONING_PROFILE" | base64 --decode > ATVRemote/App/macOS/embedded.provisionprofile
+
+          # Manual signing resolves PROVISIONING_PROFILE_SPECIFIER against installed
+          # profiles, not against that resource, so it has to be installed as well.
+          # Xcode 16+ reads the UserData path; older versions read MobileDevice.
+          PROFILE_UUID=$(security cms -D -i ATVRemote/App/macOS/embedded.provisionprofile \
+            | plutil -extract UUID raw -o - -)
+          [ -n "$PROFILE_UUID" ] || { echo "could not read UUID from the provisioning profile" >&2; exit 1; }
+
+          for dir in "$HOME/Library/MobileDevice/Provisioning Profiles" \
+                     "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
+            mkdir -p "$dir"
+            cp ATVRemote/App/macOS/embedded.provisionprofile "$dir/$PROFILE_UUID.provisionprofile"
+          done
+          echo "installed provisioning profile $PROFILE_UUID"
 
           rm -f "$RUNNER_TEMP/mas_app.p12" "$RUNNER_TEMP/mas_installer.p12"
 
