@@ -1,0 +1,15 @@
+import Foundation
+
+public typealias ProtobufMessage = Atvremote_ProtocolMessage
+public typealias CryptoPairingMessage = Atvremote_CryptoPairingMessage
+public typealias DeviceInfoMessage = Atvremote_DeviceInfoMessage
+public typealias SetStateMessage = Atvremote_SetStateMessage
+public typealias NowPlayingInfo = Atvremote_NowPlayingInfo
+public typealias SendHIDEventMessage = Atvremote_SendHIDEventMessage
+public typealias SetConnectionStateMessage = Atvremote_SetConnectionStateMessage
+public typealias ClientUpdatesConfigMessage = Atvremote_ClientUpdatesConfigMessage
+public typealias SendCommandMessage = Atvremote_SendCommandMessage
+public typealias ContentItem = Atvremote_ContentItem
+public typealias ContentItemMetadata = Atvremote_ContentItemMetadata
+public typealias PlaybackQueue = Atvremote_PlaybackQueue
+

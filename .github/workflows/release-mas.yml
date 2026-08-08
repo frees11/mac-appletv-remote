@@ -1,0 +1,139 @@
+name: Release to App Store Connect
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Two pushes in quick succession would otherwise bump the version concurrently
+# and fight over the tag.
+concurrency:
+  group: release-mas
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and upload MAS package
+    runs-on: macos-latest
+    # The bump commit this job pushes carries [skip ci], which is what stops the
+    # workflow from triggering itself.
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          persist-credentials: true
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Test ATVRemoteCore
+        working-directory: ATVRemote/Packages/ATVRemoteCore
+        run: swift test
+
+      - name: Bump version and tag
+        id: bump
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # bump-version.sh appends new_version / tag_name to $GITHUB_OUTPUT.
+          ./ATVRemote/scripts/bump-version.sh
+          NEW_VERSION=$(sed -n 's/^new_version=//p' "$GITHUB_OUTPUT" | tail -1)
+          [ -n "$NEW_VERSION" ] || { echo "bump-version.sh did not report a new version" >&2; exit 1; }
+
+          git add "ATVRemote/ATV Remote.xcodeproj/project.pbxproj"
+          git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+          git tag -a "v$NEW_VERSION" -m "Release $NEW_VERSION"
+          git push origin HEAD:main
+          git push origin "v$NEW_VERSION"
+
+      - name: Set up MAS code signing
+        env:
+          MAS_CERTIFICATE: ${{ secrets.MAS_CERTIFICATE }}
+          MAS_CERTIFICATE_PASSWORD: ${{ secrets.MAS_CERTIFICATE_PASSWORD }}
+          MAS_INSTALLER_CERTIFICATE: ${{ secrets.MAS_INSTALLER_CERTIFICATE }}
+          MAS_INSTALLER_CERTIFICATE_PASSWORD: ${{ secrets.MAS_INSTALLER_CERTIFICATE_PASSWORD }}
+          MAS_PROVISIONING_PROFILE: ${{ secrets.MAS_PROVISIONING_PROFILE }}
+        run: |
+          set -euo pipefail
+
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          KEYCHAIN_PASSWORD=$(uuidgen)
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "$MAS_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/mas_app.p12"
+          security import "$RUNNER_TEMP/mas_app.p12" \
+            -k "$KEYCHAIN_PATH" -P "$MAS_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign -T /usr/bin/productbuild
+
+          echo "$MAS_INSTALLER_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/mas_installer.p12"
+          security import "$RUNNER_TEMP/mas_installer.p12" \
+            -k "$KEYCHAIN_PATH" -P "$MAS_INSTALLER_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign -T /usr/bin/productbuild
+
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed s/\"//g)
+          security default-keychain -s "$KEYCHAIN_PATH"
+
+          # Without this codesign blocks on an interactive keychain prompt.
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "$MAS_PROVISIONING_PROFILE" | base64 --decode > ATVRemote/App/macOS/embedded.provisionprofile
+
+          rm -f "$RUNNER_TEMP/mas_app.p12" "$RUNNER_TEMP/mas_installer.p12"
+
+          security find-identity -v -p codesigning
+          security find-identity -v | grep "3rd Party Mac Developer Installer"
+
+      - name: Write App Store Connect API key
+        env:
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/private_keys"
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/private_keys/AuthKey_$ASC_KEY_ID.p8"
+          chmod 600 "$RUNNER_TEMP/private_keys/AuthKey_$ASC_KEY_ID.p8"
+
+      - name: Archive, export and upload
+        env:
+          ASC_KEY_PATH: ${{ runner.temp }}/private_keys/AuthKey_${{ secrets.ASC_KEY_ID }}.p8
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: ./ATVRemote/scripts/release.sh --no-bump
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mas-package-${{ steps.bump.outputs.new_version }}
+          path: |
+            ATVRemote/build/export/*
+            ATVRemote/build/logs/*
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.bump.outputs.tag_name }}
+          name: ${{ steps.bump.outputs.new_version }}
+          generate_release_notes: true
+          body: |
+            Submitted to App Store Connect. The binary is distributed through the
+            Mac App Store, not from this release page.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Clean up keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/app-signing.keychain-db" || true

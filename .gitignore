@@ -1,3 +1,15 @@
+# Signing material — never commit. CI gets these from GitHub Secrets and
+# decodes embedded.provisionprofile into ATVRemote/App/macOS/ at build time.
+*.p12
+*.cer
+*.pem
+*.key
+*.csr
+*.certSigningRequest
+*.mobileprovision
+*.provisionprofile
+AuthKey_*.p8
+
 # Dependencies
 node_modules/
 __pycache__/
@@ -49,3 +61,19 @@ build/tray-icon.png
 build/tray-iconTemplate.png
 build/tray-iconTemplate@2x.png
 .claude/settings.local.json
+node-binaries/
+
+# Agent tooling state
+.auto-claude/
+.omc/
+.claude_settings.json
+
+# Fake Apple TV dev target (pyatv checkout, venv and paired credentials)
+tools/fake-atv/.pyatv/
+tools/fake-atv/.venv/
+tools/fake-atv/pyatv-creds.json
+
+# Swift Package Manager build output
+ATVRemote/Packages/*/.build/
+ATVRemote/build/
+build/

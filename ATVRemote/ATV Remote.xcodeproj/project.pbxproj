@@ -1,0 +1,763 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1000001283F0001 /* ATVRemoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000011283F0001; };
+		A1000002283F0001 /* DeviceListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000012283F0001; };
+		A1000003283F0001 /* RemoteControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000013283F0001; };
+		A100000C283F0002 /* DemoModeBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000025283F0001; };
+		A100000B283F0002 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000024283F0001; };
+		A1000004283F0001 /* DeviceListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000014283F0001; };
+		A1000005283F0001 /* RemoteControlViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000015283F0001; };
+		A1000006283F0001 /* ColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000016283F0001; };
+		A1000007283F0001 /* ATVRemoteCore in Frameworks */ = {isa = PBXBuildFile; productRef = A1000021283F0001; };
+		A1000008283F0001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A100001F283F0001; };
+		A1000009283F0001 /* icon.icns in Resources */ = {isa = PBXBuildFile; fileRef = A1000022283F0001; };
+		A100000A283F0001 /* embedded.provisionprofile in Resources */ = {isa = PBXBuildFile; fileRef = A1000023283F0001; };
+		A2000001283F0001 /* BaseUITest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000011283F0001; };
+		A2000002283F0001 /* TestLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000012283F0001; };
+		A2000003283F0001 /* DeviceListPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013283F0001; };
+		A2000004283F0001 /* PinDialogPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000014283F0001; };
+		A2000005283F0001 /* RemoteControlPage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000015283F0001; };
+		A2000006283F0001 /* DeviceDiscoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000016283F0001; };
+		A2000007283F0001 /* PairingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000017283F0001; };
+		A2000008283F0001 /* RemoteControlTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000018283F0001; };
+		A2000009283F0001 /* ATVRemoteCore in Frameworks */ = {isa = PBXBuildFile; productRef = A2000021283F0001; };
+		A3000001283F0001 /* ViewInspectorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3000011283F0001; };
+		A3000002283F0001 /* DeviceListViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3000012283F0001; };
+		A3000003283F0001 /* RemoteControlViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3000013283F0001; };
+		A3000004283F0001 /* ATVRemoteCore in Frameworks */ = {isa = PBXBuildFile; productRef = A3000021283F0001; };
+		A3000005283F0001 /* ViewInspector in Frameworks */ = {isa = PBXBuildFile; productRef = A3000022283F0001; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A2000030283F0001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1000001283F0000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A100000C283F0001;
+			remoteInfo = "ATV Remote";
+		};
+		A3000030283F0001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1000001283F0000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A100000C283F0001;
+			remoteInfo = "ATV Remote";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		A1000010283F0001 /* ATV Remote.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ATV Remote.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A1000011283F0001 /* ATVRemoteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ATVRemoteApp.swift; sourceTree = "<group>"; };
+		A1000012283F0001 /* DeviceListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceListView.swift; sourceTree = "<group>"; };
+		A1000013283F0001 /* RemoteControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlView.swift; sourceTree = "<group>"; };
+		A1000025283F0001 /* DemoModeBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoModeBanner.swift; sourceTree = "<group>"; };
+		A1000024283F0001 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		A1000014283F0001 /* DeviceListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceListViewModel.swift; sourceTree = "<group>"; };
+		A1000015283F0001 /* RemoteControlViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlViewModel.swift; sourceTree = "<group>"; };
+		A1000016283F0001 /* ColorExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorExtensions.swift; sourceTree = "<group>"; };
+		A1000017283F0001 /* ATVRemote.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ATVRemote.entitlements; sourceTree = "<group>"; };
+		A1000018283F0001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A1000019283F0001 /* ATVRemoteCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = ATVRemoteCore; path = Packages/ATVRemoteCore; sourceTree = "<group>"; };
+		A100001F283F0001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A1000022283F0001 /* icon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = icon.icns; sourceTree = "<group>"; };
+		A1000023283F0001 /* embedded.provisionprofile */ = {isa = PBXFileReference; lastKnownFileType = text; path = embedded.provisionprofile; sourceTree = "<group>"; };
+		A2000010283F0001 /* ATVRemoteUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ATVRemoteUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2000011283F0001 /* BaseUITest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseUITest.swift; sourceTree = "<group>"; };
+		A2000012283F0001 /* TestLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestLauncher.swift; sourceTree = "<group>"; };
+		A2000013283F0001 /* DeviceListPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceListPage.swift; sourceTree = "<group>"; };
+		A2000014283F0001 /* PinDialogPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinDialogPage.swift; sourceTree = "<group>"; };
+		A2000015283F0001 /* RemoteControlPage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlPage.swift; sourceTree = "<group>"; };
+		A2000016283F0001 /* DeviceDiscoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceDiscoveryTests.swift; sourceTree = "<group>"; };
+		A2000017283F0001 /* PairingFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingFlowTests.swift; sourceTree = "<group>"; };
+		A2000018283F0001 /* RemoteControlTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlTests.swift; sourceTree = "<group>"; };
+		A3000010283F0001 /* ATVRemoteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ATVRemoteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A3000011283F0001 /* ViewInspectorExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewInspectorExtensions.swift; sourceTree = "<group>"; };
+		A3000012283F0001 /* DeviceListViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceListViewTests.swift; sourceTree = "<group>"; };
+		A3000013283F0001 /* RemoteControlViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteControlViewTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A100000D283F0001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000007283F0001 /* ATVRemoteCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A200000D283F0001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A2000009283F0001 /* ATVRemoteCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A300000D283F0001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A3000004283F0001 /* ATVRemoteCore in Frameworks */,
+				A3000005283F0001 /* ViewInspector in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A1000000283F0001 = {
+			isa = PBXGroup;
+			children = (
+				A1000019283F0001 /* ATVRemoteCore */,
+				A1000030283F0001 /* App */,
+				A1000031283F0001 /* Shared */,
+				A2000040283F0001 /* ATVRemoteUITests */,
+				A3000040283F0001 /* ATVRemoteTests */,
+				A100000F283F0001 /* Products */,
+				A1000020283F0001 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		A100000F283F0001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A1000010283F0001 /* ATV Remote.app */,
+				A2000010283F0001 /* ATVRemoteUITests.xctest */,
+				A3000010283F0001 /* ATVRemoteTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A1000020283F0001 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A1000030283F0001 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				A1000032283F0001 /* macOS */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A1000031283F0001 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				A1000033283F0001 /* Views */,
+				A1000034283F0001 /* ViewModels */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		A1000032283F0001 /* macOS */ = {
+			isa = PBXGroup;
+			children = (
+				A1000011283F0001 /* ATVRemoteApp.swift */,
+				A1000017283F0001 /* ATVRemote.entitlements */,
+				A1000018283F0001 /* Info.plist */,
+				A100001F283F0001 /* Assets.xcassets */,
+				A1000022283F0001 /* icon.icns */,
+				A1000023283F0001 /* embedded.provisionprofile */,
+			);
+			path = macOS;
+			sourceTree = "<group>";
+		};
+		A1000033283F0001 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A1000012283F0001 /* DeviceListView.swift */,
+				A1000013283F0001 /* RemoteControlView.swift */,
+				A1000025283F0001 /* DemoModeBanner.swift */,
+				A1000024283F0001 /* PaywallView.swift */,
+				A1000035283F0001 /* Components */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A1000034283F0001 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A1000014283F0001 /* DeviceListViewModel.swift */,
+				A1000015283F0001 /* RemoteControlViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A1000035283F0001 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				A1000016283F0001 /* ColorExtensions.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		A2000040283F0001 /* ATVRemoteUITests */ = {
+			isa = PBXGroup;
+			children = (
+				A2000011283F0001 /* BaseUITest.swift */,
+				A2000012283F0001 /* TestLauncher.swift */,
+				A2000041283F0001 /* PageObjects */,
+				A2000042283F0001 /* Tests */,
+			);
+			path = ATVRemoteUITests;
+			sourceTree = "<group>";
+		};
+		A2000041283F0001 /* PageObjects */ = {
+			isa = PBXGroup;
+			children = (
+				A2000013283F0001 /* DeviceListPage.swift */,
+				A2000014283F0001 /* PinDialogPage.swift */,
+				A2000015283F0001 /* RemoteControlPage.swift */,
+			);
+			path = PageObjects;
+			sourceTree = "<group>";
+		};
+		A2000042283F0001 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				A2000016283F0001 /* DeviceDiscoveryTests.swift */,
+				A2000017283F0001 /* PairingFlowTests.swift */,
+				A2000018283F0001 /* RemoteControlTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		A3000040283F0001 /* ATVRemoteTests */ = {
+			isa = PBXGroup;
+			children = (
+				A3000011283F0001 /* ViewInspectorExtensions.swift */,
+				A3000012283F0001 /* DeviceListViewTests.swift */,
+				A3000013283F0001 /* RemoteControlViewTests.swift */,
+			);
+			path = ATVRemoteTests;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A100000C283F0001 /* ATV Remote */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A100001C283F0001 /* Build configuration list for PBXNativeTarget "ATV Remote" */;
+			buildPhases = (
+				A100000B283F0001 /* Sources */,
+				A100000D283F0001 /* Frameworks */,
+				A100000E283F0001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "ATV Remote";
+			packageProductDependencies = (
+				A1000021283F0001 /* ATVRemoteCore */,
+			);
+			productName = "ATV Remote";
+			productReference = A1000010283F0001 /* ATV Remote.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A200000C283F0001 /* ATVRemoteUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A200001C283F0001 /* Build configuration list for PBXNativeTarget "ATVRemoteUITests" */;
+			buildPhases = (
+				A200000B283F0001 /* Sources */,
+				A200000D283F0001 /* Frameworks */,
+				A200000E283F0001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A2000031283F0001 /* PBXTargetDependency */,
+			);
+			name = ATVRemoteUITests;
+			packageProductDependencies = (
+				A2000021283F0001 /* ATVRemoteCore */,
+			);
+			productName = ATVRemoteUITests;
+			productReference = A2000010283F0001 /* ATVRemoteUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		A300000C283F0001 /* ATVRemoteTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A300001C283F0001 /* Build configuration list for PBXNativeTarget "ATVRemoteTests" */;
+			buildPhases = (
+				A300000B283F0001 /* Sources */,
+				A300000D283F0001 /* Frameworks */,
+				A300000E283F0001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A3000031283F0001 /* PBXTargetDependency */,
+			);
+			name = ATVRemoteTests;
+			packageProductDependencies = (
+				A3000021283F0001 /* ATVRemoteCore */,
+				A3000022283F0001 /* ViewInspector */,
+			);
+			productName = ATVRemoteTests;
+			productReference = A3000010283F0001 /* ATVRemoteTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A1000001283F0000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					A100000C283F0001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					A200000C283F0001 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = A100000C283F0001;
+					};
+					A300000C283F0001 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = A100000C283F0001;
+					};
+				};
+			};
+			buildConfigurationList = A1000004283F0000 /* Build configuration list for PBXProject "ATV Remote" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A1000000283F0001;
+			packageReferences = (
+				A3000050283F0001 /* XCRemoteSwiftPackageReference "ViewInspector" */,
+			);
+			productRefGroup = A100000F283F0001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A100000C283F0001 /* ATV Remote */,
+				A200000C283F0001 /* ATVRemoteUITests */,
+				A300000C283F0001 /* ATVRemoteTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A100000E283F0001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000008283F0001 /* Assets.xcassets in Resources */,
+				A1000009283F0001 /* icon.icns in Resources */,
+				A100000A283F0001 /* embedded.provisionprofile in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A200000E283F0001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A300000E283F0001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A100000B283F0001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000001283F0001 /* ATVRemoteApp.swift in Sources */,
+				A1000002283F0001 /* DeviceListView.swift in Sources */,
+				A1000003283F0001 /* RemoteControlView.swift in Sources */,
+				A100000C283F0002 /* DemoModeBanner.swift in Sources */,
+				A100000B283F0002 /* PaywallView.swift in Sources */,
+				A1000004283F0001 /* DeviceListViewModel.swift in Sources */,
+				A1000005283F0001 /* RemoteControlViewModel.swift in Sources */,
+				A1000006283F0001 /* ColorExtensions.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A200000B283F0001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A2000001283F0001 /* BaseUITest.swift in Sources */,
+				A2000002283F0001 /* TestLauncher.swift in Sources */,
+				A2000003283F0001 /* DeviceListPage.swift in Sources */,
+				A2000004283F0001 /* PinDialogPage.swift in Sources */,
+				A2000005283F0001 /* RemoteControlPage.swift in Sources */,
+				A2000006283F0001 /* DeviceDiscoveryTests.swift in Sources */,
+				A2000007283F0001 /* PairingFlowTests.swift in Sources */,
+				A2000008283F0001 /* RemoteControlTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A300000B283F0001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A3000001283F0001 /* ViewInspectorExtensions.swift in Sources */,
+				A3000002283F0001 /* DeviceListViewTests.swift in Sources */,
+				A3000003283F0001 /* RemoteControlViewTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A2000031283F0001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A100000C283F0001 /* ATV Remote */;
+			targetProxy = A2000030283F0001 /* PBXContainerItemProxy */;
+		};
+		A3000031283F0001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A100000C283F0001 /* ATV Remote */;
+			targetProxy = A3000030283F0001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A100001A283F0001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A100001B283F0001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		A100001D283F0001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/macOS/ATVRemote.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 23;
+				DEVELOPMENT_TEAM = YK34UDN964;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = App/macOS/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "ATV Remote Pro";
+				INFOPLIST_KEY_CFBundleIconFile = icon;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Aurodent CZ, s.r.o. All rights reserved.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "ATV Remote needs access to your local network to discover and control Apple TV devices.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.23;
+				PRODUCT_BUNDLE_IDENTIFIER = com.atv.remote;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A100001E283F0001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = App/macOS/ATVRemote.entitlements;
+				CODE_SIGN_IDENTITY = "3rd Party Mac Developer Application";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 23;
+				DEVELOPMENT_TEAM = YK34UDN964;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = App/macOS/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "ATV Remote Pro";
+				INFOPLIST_KEY_CFBundleIconFile = icon;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Aurodent CZ, s.r.o. All rights reserved.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "ATV Remote needs access to your local network to discover and control Apple TV devices.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.23;
+				PRODUCT_BUNDLE_IDENTIFIER = com.atv.remote;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = embedded;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		A200001D283F0001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YK34UDN964;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.atv.remote.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = "ATV Remote";
+			};
+			name = Debug;
+		};
+		A200001E283F0001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YK34UDN964;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.atv.remote.uitests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = "ATV Remote";
+			};
+			name = Release;
+		};
+		A300001D283F0001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YK34UDN964;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.atv.remote.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ATV Remote.app/Contents/MacOS/ATV Remote";
+				TEST_TARGET_NAME = "ATV Remote";
+			};
+			name = Debug;
+		};
+		A300001E283F0001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YK34UDN964;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.atv.remote.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ATV Remote.app/Contents/MacOS/ATV Remote";
+				TEST_TARGET_NAME = "ATV Remote";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A1000004283F0000 /* Build configuration list for PBXProject "ATV Remote" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A100001A283F0001 /* Debug */,
+				A100001B283F0001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A100001C283F0001 /* Build configuration list for PBXNativeTarget "ATV Remote" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A100001D283F0001 /* Debug */,
+				A100001E283F0001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A200001C283F0001 /* Build configuration list for PBXNativeTarget "ATVRemoteUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A200001D283F0001 /* Debug */,
+				A200001E283F0001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A300001C283F0001 /* Build configuration list for PBXNativeTarget "ATVRemoteTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A300001D283F0001 /* Debug */,
+				A300001E283F0001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A3000050283F0001 /* XCRemoteSwiftPackageReference "ViewInspector" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/nalexn/ViewInspector";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.10.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A1000021283F0001 /* ATVRemoteCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ATVRemoteCore;
+		};
+		A2000021283F0001 /* ATVRemoteCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ATVRemoteCore;
+		};
+		A3000021283F0001 /* ATVRemoteCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ATVRemoteCore;
+		};
+		A3000022283F0001 /* ViewInspector */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A3000050283F0001 /* XCRemoteSwiftPackageReference "ViewInspector" */;
+			productName = ViewInspector;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A1000001283F0000 /* Project object */;
+}
