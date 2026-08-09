@@ -3,6 +3,7 @@ import Network
 
 public enum CompanionConnectionError: Error, LocalizedError {
     case connectionFailed
+    case unresolvedEndpoint
     case timeout
     case disconnected
     case invalidFrame
@@ -16,6 +17,7 @@ public enum CompanionConnectionError: Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .connectionFailed: return "Failed to connect to Apple TV"
+        case .unresolvedEndpoint: return "Apple TV has no reachable address yet"
         case .timeout: return "Connection timed out"
         case .disconnected: return "Disconnected from Apple TV"
         case .invalidFrame: return "Invalid frame received"
@@ -44,6 +46,11 @@ public enum HIDCommand: Int {
 
 public final class CompanionConnection {
     private var connection: NWConnection?
+    public static let defaultConnectTimeoutNanoseconds: UInt64 = 10_000_000_000
+    public static let defaultReceiveTimeoutNanoseconds: UInt64 = 15_000_000_000
+
+    private let connectTimeoutNanoseconds: UInt64
+    private let receiveTimeoutNanoseconds: UInt64
     private let queue = DispatchQueue(label: "companion.connection")
 
     private var encryptKey: Data?
@@ -55,13 +62,24 @@ public final class CompanionConnection {
         encryptKey != nil && decryptKey != nil
     }
 
-    public init() {}
+    public init(
+        connectTimeoutNanoseconds: UInt64 = CompanionConnection.defaultConnectTimeoutNanoseconds,
+        receiveTimeoutNanoseconds: UInt64 = CompanionConnection.defaultReceiveTimeoutNanoseconds
+    ) {
+        self.connectTimeoutNanoseconds = connectTimeoutNanoseconds
+        self.receiveTimeoutNanoseconds = receiveTimeoutNanoseconds
+    }
 
-    public func connect(host: NWEndpoint.Host, port: NWEndpoint.Port) async throws {
-        let endpoint = NWEndpoint.hostPort(host: host, port: port)
-        NSLog("[Companion] Connecting to %@:%d", host.debugDescription, port.rawValue)
+    public func connect(to endpoint: NWEndpoint, via interface: NWInterface? = nil) async throws {
+        NSLog("[Companion] Connecting to %@ via %@", String(describing: endpoint), interface?.name ?? "any interface")
 
-        let connection = NWConnection(to: endpoint, using: .tcp)
+        // Scoping to the interface the service was discovered on keeps the
+        // connection off VPN interfaces — with a VPN as the primary route an
+        // unscoped Bonjour connection binds to it and never becomes ready.
+        let parameters = NWParameters.tcp
+        parameters.requiredInterface = interface
+
+        let connection = NWConnection(to: endpoint, using: parameters)
         self.connection = connection
 
         try await withThrowingTaskGroup(of: Void.self) { group in
@@ -90,7 +108,9 @@ public final class CompanionConnection {
             }
 
             group.addTask {
-                try await Task.sleep(nanoseconds: 10_000_000_000)
+                try await Task.sleep(nanoseconds: self.connectTimeoutNanoseconds)
+                NSLog("[Companion] Connect timed out, closing the connection")
+                connection.cancel()
                 throw CompanionConnectionError.timeout
             }
 
@@ -139,19 +159,7 @@ public final class CompanionConnection {
 
         NSLog("[Companion] Waiting to receive frame header...")
 
-        let header = try await withThrowingTaskGroup(of: Data.self) { group in
-            group.addTask {
-                try await self.receiveExact(connection: connection, length: 4)
-            }
-            group.addTask {
-                try await Task.sleep(nanoseconds: 15_000_000_000)
-                throw CompanionConnectionError.timeout
-            }
-
-            let result = try await group.next()!
-            group.cancelAll()
-            return result
-        }
+        let header = try await receiveExact(connection: connection, length: 4)
 
         let frameTypeRaw = header[0]
         let length = (Int(header[1]) << 16) | (Int(header[2]) << 8) | Int(header[3])
@@ -183,17 +191,38 @@ public final class CompanionConnection {
         return dict
     }
 
+    /// A peer that opens the socket but never answers must not stall the caller
+    /// forever, so every read is bounded — the body just like the header.
+    ///
+    /// The timeout has to cancel the connection, not merely throw. `NWConnection.receive`
+    /// is wrapped in a continuation that task cancellation cannot reach; without closing
+    /// the socket its completion never fires, the child task never finishes, and the task
+    /// group waits on it forever — the timeout would be thrown and then swallowed.
     private func receiveExact(connection: NWConnection, length: Int) async throws -> Data {
-        try await withCheckedThrowingContinuation { continuation in
-            connection.receive(minimumIncompleteLength: length, maximumLength: length) { data, _, _, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                } else if let data = data, data.count == length {
-                    continuation.resume(returning: data)
-                } else {
-                    continuation.resume(throwing: CompanionConnectionError.receiveFailed)
+        try await withThrowingTaskGroup(of: Data.self) { group in
+            group.addTask {
+                try await withCheckedThrowingContinuation { continuation in
+                    connection.receive(minimumIncompleteLength: length, maximumLength: length) { data, _, _, error in
+                        if let error = error {
+                            continuation.resume(throwing: error)
+                        } else if let data = data, data.count == length {
+                            continuation.resume(returning: data)
+                        } else {
+                            continuation.resume(throwing: CompanionConnectionError.receiveFailed)
+                        }
+                    }
                 }
             }
+            group.addTask {
+                try await Task.sleep(nanoseconds: self.receiveTimeoutNanoseconds)
+                NSLog("[Companion] Read timed out after %llu ns, closing the connection", self.receiveTimeoutNanoseconds)
+                connection.cancel()
+                throw CompanionConnectionError.timeout
+            }
+
+            let result = try await group.next()!
+            group.cancelAll()
+            return result
         }
     }
 

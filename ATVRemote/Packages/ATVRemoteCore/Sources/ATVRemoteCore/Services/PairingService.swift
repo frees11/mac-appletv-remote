@@ -76,10 +76,15 @@ public final class PairingService: ObservableObject, PairingServiceProtocol {
         self.device = device
         self.state = .processing
 
-        NSLog("[Pairing] Starting pairing with device: %@ at %@:%d", device.name, device.host.debugDescription, device.port.rawValue)
+        guard let endpoint = device.connectionEndpoint else {
+            state = .failed("No reachable address")
+            throw CompanionConnectionError.unresolvedEndpoint
+        }
+
+        NSLog("[Pairing] Starting pairing with device: %@ at %@", device.name, String(describing: endpoint))
 
         let connection = CompanionConnection()
-        try await connection.connect(host: device.host, port: device.port)
+        try await connection.connect(to: endpoint, via: device.interface)
         self.connection = connection
 
         NSLog("[Pairing] Connected, sending PS_Start")

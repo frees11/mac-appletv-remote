@@ -175,23 +175,14 @@ public final class DeviceDiscoveryService: ObservableObject, DeviceDiscoveryServ
         logger.info("Processing service: \(name) type: \(type) domain: \(domain)")
 
         var model: String?
+        if case .bonjour(let txtRecord) = result.metadata {
+            model = txtRecord["rpMd"]
+        }
 
-        switch result.metadata {
-        case .bonjour(let txtRecord):
-            logger.info("TXT record available for \(name)")
-            if let modelString = txtRecord["rpMd"] {
-                model = modelString
-                logger.info("TXT rpMd: \(model ?? "nil")")
-                if !modelString.hasPrefix("AppleTV") {
-                    logger.info("Removing non-AppleTV: \(name) (rpMd=\(modelString))")
-                    removeDeviceByName(name)
-                    return
-                }
-            }
-        case .none:
-            logger.info("No metadata yet for \(name) - adding provisionally")
-        @unknown default:
-            break
+        guard AppleTVDevice.isAppleTV(model: model) else {
+            logger.info("Rejecting non-Apple TV service: \(name) (rpMd=\(model ?? "absent"))")
+            removeDeviceByName(name)
+            return
         }
 
         let deviceId = "\(name).\(type)\(domain)"
@@ -204,9 +195,13 @@ public final class DeviceDiscoveryService: ObservableObject, DeviceDiscoveryServ
                     name: updated.name,
                     host: updated.host,
                     port: updated.port,
+                    endpoint: updated.endpoint,
+                    interface: updated.interface,
                     model: model,
                     isPaired: updated.isPaired,
-                    isConnected: updated.isConnected
+                    isConnected: updated.isConnected,
+                    mrpHost: updated.mrpHost,
+                    mrpPort: updated.mrpPort
                 )
                 devices[idx] = updated
                 logger.info("Updated device model: \(name) = \(model)")
@@ -214,10 +209,10 @@ public final class DeviceDiscoveryService: ObservableObject, DeviceDiscoveryServ
             return
         }
 
-        resolveEndpoint(result) { [weak self] resolvedHost, resolvedPort in
-            let host = resolvedHost ?? .name(name, nil)
-            let port = resolvedPort ?? NWEndpoint.Port(integerLiteral: 49152)
+        let serviceEndpoint = result.endpoint
+        let serviceInterface = result.interfaces.first
 
+        resolveEndpoint(result) { [weak self] resolvedHost, resolvedPort in
             Task { @MainActor in
                 guard let self = self else { return }
 
@@ -225,8 +220,10 @@ public final class DeviceDiscoveryService: ObservableObject, DeviceDiscoveryServ
                 let device = AppleTVDevice(
                     id: deviceId,
                     name: name,
-                    host: host,
-                    port: port,
+                    host: resolvedHost,
+                    port: resolvedPort,
+                    endpoint: serviceEndpoint,
+                    interface: serviceInterface,
                     model: model,
                     isPaired: false,
                     isConnected: false,
@@ -237,7 +234,7 @@ public final class DeviceDiscoveryService: ObservableObject, DeviceDiscoveryServ
                 if !self.devices.contains(where: { $0.id == device.id }) {
                     self.devices.append(device)
                     self.debugStatus = "Found \(self.devices.count) device(s)"
-                    logger.info("Added device: \(name) at \(host.debugDescription):\(port.rawValue)")
+                    logger.info("Added device: \(name) port \(resolvedPort?.rawValue ?? 0) (0 = unresolved, connecting via Bonjour)")
                 }
             }
         }
@@ -267,6 +264,7 @@ public final class DeviceDiscoveryService: ObservableObject, DeviceDiscoveryServ
     private func resolveEndpoint(_ result: NWBrowser.Result, completion: @escaping (NWEndpoint.Host?, NWEndpoint.Port?) -> Void) {
         let parameters = NWParameters.tcp
         parameters.includePeerToPeer = true
+        parameters.requiredInterface = result.interfaces.first
 
         if let ipOptions = parameters.defaultProtocolStack.internetProtocol as? NWProtocolIP.Options {
             ipOptions.version = .v4
@@ -306,10 +304,13 @@ public final class DeviceDiscoveryService: ObservableObject, DeviceDiscoveryServ
     }
 
     public func resolveDevice(_ device: AppleTVDevice) async throws -> (host: String, port: UInt16) {
-        if case .name(let hostname, _) = device.host {
-            return (hostname, device.port.rawValue)
+        guard let host = device.host, let port = device.port else {
+            throw DeviceDiscoveryError.resolutionFailed
         }
-        return (device.host.debugDescription, device.port.rawValue)
+        if case .name(let hostname, _) = host {
+            return (hostname, port.rawValue)
+        }
+        return (host.debugDescription, port.rawValue)
     }
 }
 

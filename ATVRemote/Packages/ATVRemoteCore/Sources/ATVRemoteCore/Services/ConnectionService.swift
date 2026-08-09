@@ -47,8 +47,12 @@ public final class ConnectionService: ObservableObject, ConnectionServiceProtoco
         self.companionConnection = connection
 
         do {
-            NSLog("[Connection] Connecting to companion port...")
-            try await connection.connect(host: device.host, port: device.port)
+            guard let endpoint = device.connectionEndpoint else {
+                throw CompanionConnectionError.unresolvedEndpoint
+            }
+
+            NSLog("[Connection] Connecting to %@", String(describing: endpoint))
+            try await connection.connect(to: endpoint, via: device.interface)
 
             state = .verifying
             NSLog("[Connection] Starting pair-verify...")
